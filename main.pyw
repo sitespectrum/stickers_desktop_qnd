@@ -13,6 +13,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stickerβ")
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
 
         self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
         self.resize(400 * self.scaleFactor, 300 * self.scaleFactor)
@@ -27,8 +28,6 @@ class MainWindow(QMainWindow):
         self.tray_menu = tray_menu.TrayMenu()
         self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_menu.quit_action.triggered.connect(QApplication.quit)
-
-        self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
 
         self.central_widget = QWidget(self)
         self.central_widget.setObjectName("central_widget")
