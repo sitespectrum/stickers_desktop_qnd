@@ -1,8 +1,13 @@
+import webbrowser
+
 from PySide6.QtGui import QIcon, Qt
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
 import ctypes
 from widgets import title_bar, tray_menu
+from modules import handle_oauth_login
+
+SERVER = "http://localhost/"
 
 
 class MainWindow(QMainWindow):
@@ -39,6 +44,7 @@ class MainWindow(QMainWindow):
 
         self.title_bar = title_bar.TitleBar()
         self.title_bar.close_button.clicked.connect(self.close)
+        self.title_bar.settings_button.clicked.connect(self.start_login)
         self.title_bar.setFixedHeight(30 * self.scaleFactor)
         self.central_layout.addWidget(self.title_bar)
 
@@ -58,6 +64,11 @@ class MainWindow(QMainWindow):
         self.body_layout.addWidget(self.main)
 
         self.window_visible = False
+        self.server_running = False
+
+        self.server_thread = handle_oauth_login.OAuthServerThread()
+        handle_oauth_login.OAuthHandler.thread_ref = self.server_thread
+        self.server_thread.server_started.connect(self.on_server_ready)
 
         self.setStyleSheet("""
             #central_widget {
@@ -65,6 +76,19 @@ class MainWindow(QMainWindow):
                 border-top-left-radius: 10px;
             }
         """)
+
+    def on_server_ready(self, redirect_uri):
+        webbrowser.open(f"{SERVER}login?send_to={redirect_uri}")
+
+    def start_login(self):
+        if not self.server_running:
+            self.server_thread.start()
+            self.server_running = True
+        else:
+            self.server_thread.stop()
+            self.server_thread.quit()
+            self.server_thread.wait()
+            self.server_running = False
 
     def handle_tray_click(self):
         if self.window_visible:
