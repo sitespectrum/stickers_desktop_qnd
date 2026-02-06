@@ -10,6 +10,7 @@ class TitleBar(QFrame):
     def __init__(self):
         super().__init__()
         self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.setParent(None)
 
         self.setObjectName("title_bar")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)

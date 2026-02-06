@@ -9,19 +9,39 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     code = None
     server_ref = None
 
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
+    def _send_cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "http://localhost")
+        self.send_header("Vary", "Origin")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Max-Age", "86400")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._send_cors_headers()
         self.end_headers()
-        self.wfile.write(b"<h1>Login complete. You may close this window.</h1>")
 
-    def do_POST(self):
-        content_length = int(self.headers["Content-Length"])
-        post_body = self.rfile.read(content_length).decode("utf-8")
-        query = parse_qs(urlparse(post_body).query)
-        self.code = query["code"][0]
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        params = parse_qs(parsed.query)
 
+        code = params.get("code", [None])[0]
+        if code:
+            OAuthHandler.code = code
 
+        if code:
+            self.send_response(200, "Code received.")
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(b"<h1>Login complete. You may close this window.</h1>")
+        else:
+            self.send_response(400, "Missing code parameter.")
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(b"<h1>Missing code parameter.</h1>")
 
     def log_message(self, format, *args):
         return
