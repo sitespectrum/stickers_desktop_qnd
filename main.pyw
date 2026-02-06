@@ -12,6 +12,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Stickerβ")
 
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+
         self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
         self.resize(400 * self.scaleFactor, 300 * self.scaleFactor)
         self.setFixedSize(self.size())
@@ -59,6 +61,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("""
             #central_widget {
                 background-color: #212121;
+                border-top-left-radius: 10px;
             }
         """)
 
