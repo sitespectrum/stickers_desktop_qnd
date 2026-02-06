@@ -58,6 +58,8 @@ class MainWindow(QMainWindow):
         self.main = QWidget()
         self.body_layout.addWidget(self.main)
 
+        self.window_visible = False
+
         self.setStyleSheet("""
             #central_widget {
                 background-color: #212121;
@@ -66,28 +68,31 @@ class MainWindow(QMainWindow):
         """)
 
     def handle_tray_click(self):
-        if self.isVisible():
+        if self.window_visible:
             self.hide()
         else:
             self.make_visible()
+        self.window_visible = not self.window_visible
 
     def make_visible(self):
         screen_rectangle = self.screen().availableGeometry()
         self.move((screen_rectangle.width() - self.width()), (screen_rectangle.height() - self.height()))
-
+        self.window_visible = True
         self.raise_()
         self.activateWindow()
         self.show()
 
     def closeEvent(self, event):
         self.hide()
+        self.window_visible = False
         event.ignore()
 
     # noinspection PyUnresolvedReferences
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == QEvent.ActivationChange:
-            if not self.isActiveWindow() and self.isVisible():
+            if not self.isActiveWindow() and self.window_visible:
+                self.window_visible = False
                 self.hide()
 
 
