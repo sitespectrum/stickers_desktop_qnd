@@ -4,15 +4,13 @@ import json
 import uuid
 import webbrowser
 
-import requests
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 
 from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
-
-SERVER = "http://localhost"
+from globals.constants import SERVER
 
 
 class Settings(QFrame):
@@ -118,20 +116,33 @@ class Settings(QFrame):
             self.login_button.setText("Login")
 
     def log_out(self):
-        r = requests.get(f"{SERVER}/api/auth/logout", cookies=request_helpers.get_cookies())
-        if r.status_code == 200:
-            self.current_user.logged_in = False
+        r = request_helpers.make_request(url=f"{SERVER}/api/auth/logout")
+
+        def req_finished():
+            status = request_helpers.get_status_code(r)
+            if status == 200:
+                self.current_user.logged_in = False
+            r.deleteLater()
+
+        r.finished.connect(req_finished)
 
     def get_user(self):
-        r = requests.get(f"{SERVER}/api/auth/profile/me", cookies=request_helpers.get_cookies())
-        if r.status_code == 200:
-            print("Logged in")
-            self.current_user.username = r.json()["username"]
-            self.current_user.display_name = r.json()["display_name"]
-            self.current_user.role = r.json()["role"]
-            self.current_user.logged_in = True
-        else:
-            self.current_user.logged_in = False
+        r = request_helpers.make_request(url=f"{SERVER}/api/auth/profile/me")
+
+        def req_finished():
+            status = request_helpers.get_status_code(r)
+            data = bytes(r.readAll())
+            body = json.loads(data.decode("utf-8")) if data else {}
+            if status == 200:
+                self.current_user.username = body["username"]
+                self.current_user.display_name = body["display_name"]
+                self.current_user.role = body["role"]
+                self.current_user.logged_in = True
+            else:
+                self.current_user.logged_in = False
+            r.deleteLater()
+
+        r.finished.connect(req_finished)
 
     def on_server_ready(self, redirect_uri):
         webbrowser.open(f"{SERVER}/login?send_to={redirect_uri}&challenge={self.challenge}")
@@ -143,14 +154,17 @@ class Settings(QFrame):
         if code == handle_oauth_login.OAuthHandler.ABORT_CODE:
             return
 
-        req = requests.post(f"{SERVER}/api/auth/oauth/validate_code", json={
-                                "code": code,
-                                "code_verifier": self.pkce_verifier}
-                            )
-        with open("cookies.json", "w") as f:
-            f.write(json.dumps(req.cookies.get_dict()))
+        r = request_helpers.make_request(
+            url=f"{SERVER}/api/auth/oauth/validate_code",
+            method="POST",
+            json_data={"code": code, "code_verifier": self.pkce_verifier}
+        )
 
-        self.get_user()
+        def req_finished():
+            r.deleteLater()
+            self.get_user()
+
+        r.finished.connect(req_finished)
 
     def close_settings(self):
         self.setVisible(False)

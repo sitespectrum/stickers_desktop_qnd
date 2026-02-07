@@ -2,9 +2,7 @@ from PySide6.QtGui import QIcon, Qt
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
 import ctypes
-from widgets import title_bar, tray_menu, settings
-
-VERSION = "0.0.0"
+from widgets import title_bar, tray_menu, settings, sidebar
 
 
 class MainWindow(QMainWindow):
@@ -52,9 +50,7 @@ class MainWindow(QMainWindow):
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.body.setLayout(self.body_layout)
 
-        self.sidebar = QWidget()
-        self.sidebar.setStyleSheet("border-right: 1px solid #333")
-        self.sidebar.setFixedWidth(40 * self.scaleFactor)
+        self.sidebar = sidebar.Sidebar()
         self.body_layout.addWidget(self.sidebar)
 
         self.main = QWidget()
