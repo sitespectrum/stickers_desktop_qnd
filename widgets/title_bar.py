@@ -2,7 +2,7 @@ import ctypes
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy
 from modules import ui_helpers
 
 
@@ -16,8 +16,14 @@ class TitleBar(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.layout = QHBoxLayout()
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.setLayout(self.layout)
+
+        self.label = QLabel("Stickerß")
+        self.label.setStyleSheet(f"color: #999;")
+        self.layout.addWidget(self.label)
+
+        self.spacer = QSpacerItem(400 * self.scaleFactor, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.layout.addItem(self.spacer)
 
         self.setStyleSheet("""
             #title_bar {

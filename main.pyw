@@ -4,6 +4,8 @@ from PySide6.QtCore import QEvent
 import ctypes
 from widgets import title_bar, tray_menu, settings
 
+VERSION = "0.0.0"
+
 
 class MainWindow(QMainWindow):
 
@@ -40,7 +42,7 @@ class MainWindow(QMainWindow):
         self.title_bar = title_bar.TitleBar()
         self.title_bar.close_button.clicked.connect(self.close)
         self.title_bar.settings_button.clicked.connect(self.toggle_settings)
-        self.title_bar.setFixedHeight(30 * self.scaleFactor)
+        self.title_bar.setFixedHeight(int(round(35 * self.scaleFactor)))
         self.central_layout.addWidget(self.title_bar)
 
         self.body = QWidget()
