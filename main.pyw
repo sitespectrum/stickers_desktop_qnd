@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('utils/icon.png'))
-        self.tray_icon.setToolTip("Tele-py")
+        self.tray_icon.setToolTip("Stickerβ")
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.handle_tray_click)
 

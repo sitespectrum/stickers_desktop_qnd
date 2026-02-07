@@ -9,6 +9,8 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     code = None
     server_ref = None
 
+    ABORT_CODE = "__OAUTH_ABORT__"
+
     def _send_cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "http://localhost")
         self.send_header("Vary", "Origin")
@@ -24,6 +26,18 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+
+        if parsed.path == "/callback/abort":
+            OAuthHandler.code = OAuthHandler.ABORT_CODE
+
+            self.send_response(200, "Aborted.")
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(b"<h1>Login aborted. You may close this window.</h1>")
+
+            return
+
         params = parse_qs(parsed.query)
 
         code = params.get("code", [None])[0]

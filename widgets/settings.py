@@ -10,6 +10,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 
 from modules import ui_helpers, handle_oauth_login, request_helpers
+from globals import user
 
 SERVER = "http://localhost"
 
@@ -17,6 +18,8 @@ SERVER = "http://localhost"
 class Settings(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.current_user = user.user
+        self.current_user.logged_inChanged.connect(self.set_user)
         self.server_running = False
         self.setObjectName("settings")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -72,6 +75,8 @@ class Settings(QFrame):
         self.close_button.setIcon(ui_helpers.svg_to_icon("utils/ui/x.svg", QSize(icon_px, icon_px), button_color))
         self.close_button.setIconSize(QSize(icon_px, icon_px))
 
+        self.user_label = QLabel("Not logged in")
+
         self.login_button = QPushButton("Login")
         self.login_button.setFixedSize(100 * self.scaleFactor, 30 * self.scaleFactor)
         self.login_button.clicked.connect(self.start_login)
@@ -80,6 +85,7 @@ class Settings(QFrame):
         self.title.setStyleSheet(f"font-size: {20 * self.scaleFactor}px; font-weight: bold;")
         self.layout.addWidget(self.close_button)
         self.layout.addWidget(self.title)
+        self.layout.addWidget(self.user_label)
         self.layout.addWidget(self.login_button)
 
         self.server_thread = handle_oauth_login.OAuthServerThread()
@@ -91,12 +97,51 @@ class Settings(QFrame):
         self.pkce_verifier = None
         self.challenge = None
 
+        self.get_user()
+
+    def set_user(self, logged_in: bool = False):
+        if logged_in:
+            self.user_label.setText(f"Logged in as {"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}")
+            try:
+                self.login_button.clicked.disconnect()
+            except RuntimeWarning:
+                pass
+            self.login_button.clicked.connect(self.log_out)
+            self.login_button.setText("Logout")
+        else:
+            try:
+                self.login_button.clicked.disconnect()
+            except RuntimeWarning:
+                pass
+            self.login_button.clicked.connect(self.start_login)
+            self.user_label.setText("Not logged in")
+            self.login_button.setText("Login")
+
+    def log_out(self):
+        r = requests.get(f"{SERVER}/api/auth/logout", cookies=request_helpers.get_cookies())
+        if r.status_code == 200:
+            self.current_user.logged_in = False
+
+    def get_user(self):
+        r = requests.get(f"{SERVER}/api/auth/profile/me", cookies=request_helpers.get_cookies())
+        if r.status_code == 200:
+            print("Logged in")
+            self.current_user.username = r.json()["username"]
+            self.current_user.display_name = r.json()["display_name"]
+            self.current_user.role = r.json()["role"]
+            self.current_user.logged_in = True
+        else:
+            self.current_user.logged_in = False
+
     def on_server_ready(self, redirect_uri):
         webbrowser.open(f"{SERVER}/login?send_to={redirect_uri}&challenge={self.challenge}")
 
     def on_code_received(self, code: str):
         self.server_running = True
         self.start_login()
+
+        if code == handle_oauth_login.OAuthHandler.ABORT_CODE:
+            return
 
         req = requests.post(f"{SERVER}/api/auth/oauth/validate_code", json={
                                 "code": code,
@@ -105,8 +150,7 @@ class Settings(QFrame):
         with open("cookies.json", "w") as f:
             f.write(json.dumps(req.cookies.get_dict()))
 
-        r = requests.get(f"{SERVER}/api/auth/profile/me", cookies=request_helpers.get_cookies())
-        print(r.json())
+        self.get_user()
 
     def close_settings(self):
         self.setVisible(False)
