@@ -88,7 +88,6 @@ class Body(QFrame):
             self.download_failed.raise_()
 
     def download_pack(self, pack: str = ""):
-        print(pack)
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
