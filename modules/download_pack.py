@@ -38,6 +38,8 @@ class DownloadPack(QObject):
     download_failed = Signal(str)
     pack_downloaded = Signal(str)
 
+    downloading = False
+
     def __init__(self):
         super().__init__()
         self._percent = 0
@@ -48,6 +50,7 @@ class DownloadPack(QObject):
         self._processed_items = 0
 
     def download_pack(self, pack_name: str):
+        self.downloading = True
         self._percent = 0
         self._finished_threads = 0
         self._processed_items = 0
@@ -90,6 +93,8 @@ class DownloadPack(QObject):
             else:
                 self.percent_changed.emit(100)
                 self.download_failed.emit("Unexpected error downloading pack")
+            self.downloading = False
 
         self._reply = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack_name}")
+        self.percent_changed.emit(0)
         self._reply.finished.connect(on_req_finished)

@@ -17,7 +17,6 @@ class Body(QFrame):
 
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
-        self.pack_not_downloaded.download_button.clicked.connect(self.download_pack)
 
         self.progress_bar = QProgressBar(parent=self)
         self.progress_bar.setVisible(False)
@@ -88,22 +87,31 @@ class Body(QFrame):
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()
 
-    def download_pack(self):
-        if not os.path.exists(os.path.join(os.getcwd(), "stickers", self.current_pack)):
+    def download_pack(self, pack: str = ""):
+        print(pack)
+        if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
-            os.mkdir(os.path.join(os.getcwd(), "stickers", self.current_pack))
-            self.downloader.download_pack(self.current_pack)
+            os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
+            self.downloader.download_pack(pack)
         else:
             print("Pack already downloaded")
-        self.load_stickers(self.current_pack)
+        self.load_stickers(pack)
 
     def load_stickers(self, sticker_pack: str):
+        if self.downloader.downloading:
+            return
         self.pack_not_downloaded.setVisible(False)
         self.current_pack = sticker_pack
         self._clear_layout()
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", sticker_pack)):
             self.pack_not_downloaded.setVisible(True)
+            # noinspection PyBroadException
+            try:
+                self.pack_not_downloaded.download_button.clicked.disconnect()
+            except Exception:
+                pass
+            self.pack_not_downloaded.download_button.clicked.connect(lambda checked=False, pack=sticker_pack: self.download_pack(pack))
             self.pack_not_downloaded.raise_()
         pass
 
