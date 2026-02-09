@@ -9,13 +9,17 @@ from globals.user import user
 from globals.constants import SERVER
 from modules import request_helpers
 
+from widgets import body
+
 
 class Sidebar(QFrame):
-    def __init__(self):
+    def __init__(self, body_widget: body.Body = None):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
         self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+
+        self.body = body_widget
 
         self._thumbnail_cache: dict[str, QIcon] = {}
         self._pending_thumbnail: dict[object, QPushButton] = {}
@@ -118,7 +122,7 @@ class Sidebar(QFrame):
                             background-color: #444;
                         }
                     """)
-                    button.clicked.connect(lambda checked=False, name=pack["name"]: print(name))
+                    button.clicked.connect(lambda checked=False, name=pack["name"]: self.body.load_stickers(name))
                     self.content_layout.addWidget(button)
 
                     self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)

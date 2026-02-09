@@ -26,6 +26,9 @@ class Settings(QFrame):
 
         self.setFixedSize(400 * self.scaleFactor, 300 * self.scaleFactor)
         self.setStyleSheet("""
+            QWidget {
+                color: #ccc;
+            }
             #settings {
                 background-color: #212121;
                 border-top-left-radius: 10px;
@@ -76,7 +79,7 @@ class Settings(QFrame):
         self.user_label = QLabel("Not logged in")
 
         self.login_button = QPushButton("Login")
-        self.login_button.setFixedSize(100 * self.scaleFactor, 30 * self.scaleFactor)
+        self.login_button.setFixedSize(100 * self.scaleFactor, 20 * self.scaleFactor)
         self.login_button.clicked.connect(self.start_login)
 
         self.title = QLabel("Settings")

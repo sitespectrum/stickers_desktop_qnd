@@ -2,7 +2,7 @@ from PySide6.QtGui import QIcon, Qt
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
 import ctypes
-from widgets import title_bar, tray_menu, settings, sidebar
+from widgets import title_bar, tray_menu, settings, sidebar, body
 
 
 class MainWindow(QMainWindow):
@@ -50,18 +50,22 @@ class MainWindow(QMainWindow):
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.body.setLayout(self.body_layout)
 
-        self.sidebar = sidebar.Sidebar()
+        self.main = body.Body()
+
+        self.sidebar = sidebar.Sidebar(body_widget=self.main)
         self.body_layout.addWidget(self.sidebar)
 
-        self.main = QWidget()
         self.body_layout.addWidget(self.main)
-
         self.window_visible = False
 
         self.setStyleSheet("""
             #central_widget {
                 background-color: #212121;
                 border-top-left-radius: 10px;
+            }
+            QWidget {
+                font-size: 12pt;
+                color: #ccc
             }
         """)
 
