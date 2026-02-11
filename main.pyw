@@ -1,7 +1,6 @@
-from PySide6.QtGui import QIcon, Qt
+from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
-import ctypes
 from widgets import title_bar, tray_menu, settings, sidebar, body
 
 
@@ -15,8 +14,9 @@ class MainWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
 
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
-        self.resize(400 * self.scaleFactor, 300 * self.scaleFactor)
+        self.screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.screen.devicePixelRatio()
+        self.resize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setFixedSize(self.size())
 
         self.tray_icon = QSystemTrayIcon(self)
@@ -58,13 +58,18 @@ class MainWindow(QMainWindow):
         self.body_layout.addWidget(self.main)
         self.window_visible = False
 
+        base_size = 10
+        scaled_font = QFont()
+        scaled_font.setPointSizeF(base_size * self.scaleFactor)
+
+        self.setFont(scaled_font)
+
         self.setStyleSheet("""
             #central_widget {
                 background-color: #212121;
                 border-top-left-radius: 10px;
             }
             QWidget {
-                font-size: 12pt;
                 color: #ccc
             }
         """)
@@ -87,7 +92,7 @@ class MainWindow(QMainWindow):
         self.window_visible = not self.window_visible
 
     def make_visible(self):
-        screen_rectangle = self.screen().availableGeometry()
+        screen_rectangle = self.screen.geometry()
         self.move((screen_rectangle.width() - self.width()), (screen_rectangle.height() - self.height()))
         self.window_visible = True
         self.raise_()

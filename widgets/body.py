@@ -1,7 +1,7 @@
-import ctypes
 import os
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar
 
 from widgets.popups import pack_not_downloaded, download_failed
@@ -13,14 +13,15 @@ class Body(QFrame):
         super().__init__()
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
 
         self.progress_bar = QProgressBar(parent=self)
         self.progress_bar.setVisible(False)
-        self.progress_bar.setFixedSize(200 * self.scaleFactor, 20 * self.scaleFactor)
+        self.progress_bar.setFixedSize(int(200 * self.scaleFactor), int(20 * self.scaleFactor))
         self.progress_bar.setRange(0, 100)
 
         self.downloader = download_pack.DownloadPack()
@@ -57,7 +58,7 @@ class Body(QFrame):
         self.layout = QGridLayout()
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
-        self.welcome = QLabel("Welcome back! To begin select a sticker pack from the left.")
+        self.welcome = QLabel("Welcome back! To begin, select a sticker pack from the left.")
         self.layout.addWidget(self.welcome)
 
         self.setLayout(self.layout)

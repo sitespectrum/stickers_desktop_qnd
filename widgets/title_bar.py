@@ -1,7 +1,5 @@
-import ctypes
-
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QGuiApplication
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy
 from modules import ui_helpers
 
@@ -9,7 +7,8 @@ from modules import ui_helpers
 class TitleBar(QFrame):
     def __init__(self):
         super().__init__()
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
         self.setParent(None)
 
         self.setObjectName("title_bar")
@@ -22,7 +21,7 @@ class TitleBar(QFrame):
         self.label.setStyleSheet(f"color: #999;")
         self.layout.addWidget(self.label)
 
-        self.spacer = QSpacerItem(400 * self.scaleFactor, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.spacer = QSpacerItem(int(400 * self.scaleFactor), 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.layout.addItem(self.spacer)
 
         self.setStyleSheet("""
@@ -59,7 +58,7 @@ class TitleBar(QFrame):
         self.settings_button.setFixedSize(btn_px, btn_px)
         self.settings_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_button.setIcon(ui_helpers.svg_to_icon("utils/ui/settings.svg", QSize(icon_px, icon_px), button_color))
-        self.settings_button.setIconSize(QSize(icon_px - (5 * self.scaleFactor), icon_px - (5 * self.scaleFactor)))
+        self.settings_button.setIconSize(QSize(int(icon_px - (5 * self.scaleFactor)), int(icon_px - (5 * self.scaleFactor))))
 
         self.layout.addWidget(self.settings_button)
         self.layout.addWidget(self.close_button)

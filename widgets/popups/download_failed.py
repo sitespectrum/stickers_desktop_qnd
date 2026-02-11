@@ -1,6 +1,5 @@
-import ctypes
-
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton
 
 
@@ -9,9 +8,10 @@ class DownloadFailed(QFrame):
         super().__init__(parent)
         self.setObjectName("download_failed")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.setFixedSize(250 * self.scaleFactor, 70 * self.scaleFactor)
+        self.setFixedSize(int(250 * self.scaleFactor), int(70 * self.scaleFactor))
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -41,7 +41,7 @@ class DownloadFailed(QFrame):
         self.button_layout = QVBoxLayout()
         self.button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.close_button = QPushButton("Close")
-        self.close_button.setFixedSize(100 * self.scaleFactor, 20 * self.scaleFactor)
+        self.close_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
         self.close_button.clicked.connect(self.hide)
         self.button_layout.addWidget(self.close_button)
 

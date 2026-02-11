@@ -1,6 +1,5 @@
-import ctypes
-
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton
 
 
@@ -9,9 +8,10 @@ class PackNotDownloaded(QFrame):
         super().__init__(parent)
         self.setObjectName("pack_not_downloaded")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.setFixedSize(250 * self.scaleFactor, 70 * self.scaleFactor)
+        self.setFixedSize(int(250 * self.scaleFactor), int(70 * self.scaleFactor))
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -41,7 +41,7 @@ class PackNotDownloaded(QFrame):
         self.download_button = QPushButton("Download")
         self.button_layout = QVBoxLayout()
         self.button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.download_button.setFixedSize(100 * self.scaleFactor, 20 * self.scaleFactor)
+        self.download_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
         self.button_layout.addWidget(self.download_button)
 
         self.layout = QVBoxLayout()

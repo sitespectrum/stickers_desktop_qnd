@@ -1,11 +1,10 @@
-import ctypes
 import hashlib
 import json
 import uuid
 import webbrowser
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QGuiApplication
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 
 from modules import ui_helpers, handle_oauth_login, request_helpers
@@ -22,9 +21,10 @@ class Settings(QFrame):
         self.setObjectName("settings")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.setFixedSize(400 * self.scaleFactor, 300 * self.scaleFactor)
+        self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setStyleSheet("""
             QWidget {
                 color: #ccc;
@@ -79,7 +79,7 @@ class Settings(QFrame):
         self.user_label = QLabel("Not logged in")
 
         self.login_button = QPushButton("Login")
-        self.login_button.setFixedSize(100 * self.scaleFactor, 20 * self.scaleFactor)
+        self.login_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
         self.login_button.clicked.connect(self.start_login)
 
         self.title = QLabel("Settings")

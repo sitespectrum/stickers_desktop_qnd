@@ -1,8 +1,7 @@
-import ctypes
 import json
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon, QPixmap, QGuiApplication
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea
 
 from globals.user import user
@@ -17,7 +16,8 @@ class Sidebar(QFrame):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
-        self.scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
         self.body = body_widget
 
@@ -25,7 +25,7 @@ class Sidebar(QFrame):
         self._pending_thumbnail: dict[object, QPushButton] = {}
 
         self.setObjectName("sidebar")
-        self.setFixedWidth(40 * self.scaleFactor)
+        self.setFixedWidth(int(40 * self.scaleFactor))
         self.setStyleSheet("""
            QFrame#sidebar {
                border-right: 1px solid #333;
@@ -51,7 +51,7 @@ class Sidebar(QFrame):
         self.content_layout = QVBoxLayout(self.scroll_content)
         self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(1 * self.scaleFactor)
+        self.content_layout.setSpacing(int(1 * self.scaleFactor))
 
         self.layout.addWidget(self.scroll)
 
@@ -86,7 +86,7 @@ class Sidebar(QFrame):
                     icon = QIcon(pixmap)
                     self._thumbnail_cache[url] = icon
                     btn.setIcon(icon)
-                    btn.setIconSize(QSize(30 * self.scaleFactor, 30 * self.scaleFactor))
+                    btn.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
             reply.deleteLater()
 
         reply.finished.connect(on_finished)
