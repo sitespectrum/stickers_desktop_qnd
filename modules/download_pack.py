@@ -112,7 +112,7 @@ class DownloadPack(QObject):
         super().__init__()
         self._percent = 0
         self._reply = None
-        self._threads = []
+        self._threads: list[_DownloadThread | _DownloadThumbnail] = []
         self._finished_threads = 0
         self._total_items = 0
         self._processed_items = 0
@@ -160,7 +160,6 @@ class DownloadPack(QObject):
 
                     chunks = _chunk_list(downloadable)
                     self._threads = [_DownloadThread(chunk, pack_name) for chunk in chunks]
-                    # noinspection PyTypeChecker
                     self._threads.append(_DownloadThumbnail(body.get("thumbnail"), pack_name))
 
                     for thread in self._threads:
