@@ -1,10 +1,13 @@
 import json
 import os
+import shutil
+import time
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar
 
+from widgets import sidebar
 from globals.constants import SERVER
 from widgets.popups import pack_not_downloaded, download_failed
 from modules import download_pack, request_helpers
@@ -28,8 +31,9 @@ class Body(QFrame):
 
         self.downloader = download_pack.DownloadPack()
         self.downloader.download_failed.connect(self.on_download_fail)
-        self.downloader.pack_downloaded.connect(self.load_stickers)
         self.downloader.percent_changed.connect(self.on_progress)
+
+        self.sidebar = None
 
         self.download_failed = download_failed.DownloadFailed(parent=self)
 
@@ -90,26 +94,41 @@ class Body(QFrame):
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()
 
-    def download_pack(self, pack: str = ""):
+    def download_pack(self, pack: str = "", no_switch=False):
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
 
             r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}")
+            os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:
-                    return
+                    shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
                 data = bytes(r.readAll())
                 payload = json.loads(data.decode("utf-8")) if data else {}
                 with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "w") as f:
                     f.write(json.dumps(payload, indent=4))
             r.finished.connect(create_sticker_into)
-
-            os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
+            self.downloader.pack_downloaded.disconnect()
+            if not no_switch:
+                self.downloader.pack_downloaded.connect(self.load_stickers)
             self.downloader.download_pack(pack)
         else:
             print("Pack already downloaded")
-        self.load_stickers(pack)
+        if not no_switch:
+            self.load_stickers(pack)
+
+    def delete_pack(self, pack: str):
+        shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
+        if pack == self.current_pack:
+            self._clear_layout()
+
+        if self.sidebar is not None:
+            self.sidebar.get_sticker_packs()
+
+    def redownload_pack(self, pack: str):
+        self.delete_pack(pack)
+        self.download_pack(pack)
 
     def load_stickers(self, sticker_pack: str):
         if self.downloader.downloading:

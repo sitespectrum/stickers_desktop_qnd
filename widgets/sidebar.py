@@ -2,7 +2,7 @@ import glob
 import json
 import os
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QPoint
 from PySide6.QtGui import QIcon, QPixmap, QGuiApplication
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea
 
@@ -10,7 +10,7 @@ from globals.user import user
 from globals.constants import SERVER
 from modules import request_helpers
 
-from widgets import body
+from widgets import body, sticker_pack_menu
 
 
 class Sidebar(QFrame):
@@ -25,6 +25,8 @@ class Sidebar(QFrame):
 
         self._thumbnail_cache: dict[str, QIcon] = {}
         self._pending_thumbnail: dict[object, QPushButton] = {}
+
+        self.pack_context_menu = sticker_pack_menu.PackMenu(parent=self)
 
         self.setObjectName("sidebar")
         self.setFixedWidth(int(40 * self.scaleFactor))
@@ -92,10 +94,42 @@ class Sidebar(QFrame):
 
         reply.finished.connect(on_finished)
 
+    def pack_context_menu_requested(self, pos, button, pack):
+        self.pack_context_menu.download.setVisible(True)
+        self.pack_context_menu.download.triggered.disconnect()
+        self.pack_context_menu.download.triggered.connect(lambda checked=False, pack=pack: self.body.download_pack(pack, no_switch=True))
+
+        self.pack_context_menu.redownload.setVisible(True)
+        self.pack_context_menu.redownload.triggered.disconnect()
+        self.pack_context_menu.redownload.triggered.connect(lambda checked=False, pack=pack: self.body.redownload_pack(pack))
+
+        self.pack_context_menu.delete_action.setVisible(True)
+        self.pack_context_menu.delete_action.triggered.disconnect()
+        self.pack_context_menu.delete_action.triggered.connect(lambda checked=False, pack=pack: self.body.delete_pack(pack))
+
+        self.pack_context_menu.remove_action.setVisible(True)
+        self.pack_context_menu.remove_action.triggered.disconnect()
+
+        global_pos = button.mapToGlobal(QPoint(0, button.height()))
+        self.pack_context_menu.move(global_pos)
+
+        if os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
+            self.pack_context_menu.download.setVisible(False)
+        else:
+            self.pack_context_menu.redownload.setVisible(False)
+            self.pack_context_menu.delete_action.setVisible(False)
+
+        self.pack_context_menu.show()
+
     def get_sticker_packs(self):
         self._clear_layout()
         if not self.current_user.logged_in:
-            packs = os.listdir("./stickers")
+            packs = []
+            if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
+                pass
+            else:
+                packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
+
             for pack in packs:
                 button = QPushButton("")
                 button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
@@ -118,6 +152,12 @@ class Sidebar(QFrame):
                 thumbnail = glob.glob(f"./stickers/{pack}/thumbnail.*")
                 button.setIcon(QIcon(thumbnail[0]))
                 button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
+
+                button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                button.customContextMenuRequested.connect(
+                    lambda pos, btn=button, pack=pack: self.pack_context_menu_requested(pos, btn, pack)
+                )
+
 
         else:
             url = f"{SERVER}/api/stickers/get_packs"
@@ -154,6 +194,11 @@ class Sidebar(QFrame):
                         else:
                             button.setIcon(QIcon(thumbnail[0]))
                         button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
+
+                        button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                        button.customContextMenuRequested.connect(
+                            lambda pos, btn=button, pack=pack["name"]: self.pack_context_menu_requested(pos, btn, pack)
+                        )
                 finally:
                     reply.deleteLater()
 

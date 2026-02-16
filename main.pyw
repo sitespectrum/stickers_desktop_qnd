@@ -55,6 +55,8 @@ class MainWindow(QMainWindow):
         self.sidebar = sidebar.Sidebar(body_widget=self.main)
         self.body_layout.addWidget(self.sidebar)
 
+        self.main.sidebar = self.sidebar
+
         self.body_layout.addWidget(self.main)
         self.window_visible = False
 

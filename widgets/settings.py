@@ -48,6 +48,10 @@ class Settings(QFrame):
                 background-color: #111;
                 border-radius: 5px;
             }
+            QPushButton:disabled {
+                background-color: #444;
+                border-radius: 5px;
+            }
             QPushButton:hover {
                 background-color: #333;
             }
@@ -120,8 +124,11 @@ class Settings(QFrame):
 
     def log_out(self):
         r = request_helpers.make_request(url=f"{SERVER}/api/auth/logout")
+        self.login_button.setText("Logging out...")
+        self.login_button.setDisabled(True)
 
         def req_finished():
+            self.login_button.setDisabled(False)
             status = request_helpers.get_status_code(r)
             if status == 200:
                 self.current_user.logged_in = False
