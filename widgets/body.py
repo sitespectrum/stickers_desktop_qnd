@@ -1,11 +1,13 @@
+import json
 import os
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar
 
+from globals.constants import SERVER
 from widgets.popups import pack_not_downloaded, download_failed
-from modules import download_pack
+from modules import download_pack, request_helpers
 
 
 class Body(QFrame):
@@ -92,6 +94,17 @@ class Body(QFrame):
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
+
+            r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}")
+            def create_sticker_into():
+                if r.error() != r.NetworkError.NoError:
+                    return
+                data = bytes(r.readAll())
+                payload = json.loads(data.decode("utf-8")) if data else {}
+                with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "w") as f:
+                    f.write(json.dumps(payload, indent=4))
+            r.finished.connect(create_sticker_into)
+
             os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
             self.downloader.download_pack(pack)
         else:
