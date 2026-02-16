@@ -18,7 +18,7 @@ class TitleBar(QFrame):
         self.setLayout(self.layout)
 
         self.label = QLabel("Stickerß")
-        self.label.setStyleSheet(f"color: #999;")
+        self.label.setStyleSheet(f"color: #999; font-size: {10 * self.scaleFactor}px")
         self.layout.addWidget(self.label)
 
         self.spacer = QSpacerItem(int(400 * self.scaleFactor), 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
