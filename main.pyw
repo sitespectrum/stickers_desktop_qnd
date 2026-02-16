@@ -72,7 +72,7 @@ class MainWindow(QMainWindow):
                 border-top-left-radius: 10px;
             }
             QWidget {
-                color: #ccc
+                color: #ccc;
             }
         """)
 

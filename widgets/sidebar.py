@@ -131,6 +131,8 @@ class Sidebar(QFrame):
                 packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
 
             for pack in packs:
+                with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "r") as f:
+                    info = json.loads(f.read())
                 button = QPushButton("")
                 button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
                 button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -152,6 +154,8 @@ class Sidebar(QFrame):
                 thumbnail = glob.glob(f"./stickers/{pack}/thumbnail.*")
                 button.setIcon(QIcon(thumbnail[0]))
                 button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
+
+                button.setToolTip(info["title"])
 
                 button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
                 button.customContextMenuRequested.connect(
@@ -190,9 +194,13 @@ class Sidebar(QFrame):
                         self.content_layout.addWidget(button)
                         thumbnail = glob.glob(f"./stickers/{pack['name']}/thumbnail.*")
                         if not thumbnail:
+                            button.setToolTip(pack["title"])
                             self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
                         else:
                             button.setIcon(QIcon(thumbnail[0]))
+                            with open(os.path.join(os.getcwd(), "stickers", pack["name"], "info.json"), "r") as f:
+                                info = json.loads(f.read())
+                            button.setToolTip(info["title"])
                         button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
 
                         button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
