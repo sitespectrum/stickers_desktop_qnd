@@ -1,3 +1,4 @@
+import glob
 import json
 
 from PySide6.QtCore import Qt, QSize
@@ -86,7 +87,6 @@ class Sidebar(QFrame):
                     icon = QIcon(pixmap)
                     self._thumbnail_cache[url] = icon
                     btn.setIcon(icon)
-                    btn.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
             reply.deleteLater()
 
         reply.finished.connect(on_finished)
@@ -107,7 +107,7 @@ class Sidebar(QFrame):
                 payload = json.loads(data.decode("utf-8")) if data else {}
                 for pack in payload.get("packs", []):
                     button = QPushButton("")
-                    button.setFixedSize(35 * self.scaleFactor, 35 * self.scaleFactor)
+                    button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
                     button.setCursor(Qt.CursorShape.PointingHandCursor)
                     button.setStyleSheet("""
                         QPushButton {
@@ -124,8 +124,12 @@ class Sidebar(QFrame):
                     """)
                     button.clicked.connect(lambda checked=False, name=pack["name"]: self.body.load_stickers(name))
                     self.content_layout.addWidget(button)
-
-                    self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
+                    thumbnail = glob.glob(f"./stickers/{pack['name']}/thumbnail.*")
+                    if not thumbnail:
+                        self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
+                    else:
+                        button.setIcon(QIcon(thumbnail[0]))
+                    button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
             finally:
                 reply.deleteLater()
 

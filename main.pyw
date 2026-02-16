@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         self.window_visible = not self.window_visible
 
     def make_visible(self):
-        screen_rectangle = self.screen.geometry()
+        screen_rectangle = self.screen.availableGeometry()
         self.move((screen_rectangle.width() - self.width()), (screen_rectangle.height() - self.height()))
         self.window_visible = True
         self.raise_()

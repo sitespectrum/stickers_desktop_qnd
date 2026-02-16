@@ -63,6 +63,44 @@ class _DownloadThread(QThread):
         self.thread_done.emit()
 
 
+class _DownloadThumbnail(QThread):
+    thread_done = Signal()
+    progress = Signal(int)
+
+    def __init__(self, thumbnail_id: str, pack_name: str):
+        super().__init__()
+
+        self.thumbnail_id = thumbnail_id
+        self.request = None
+        self.pack_name = pack_name
+
+    def run(self):
+        reply = request_helpers.make_request(
+            f"{SERVER}/api/stickers/get_sticker/{self.thumbnail_id}"
+        )
+
+        loop = QEventLoop()
+
+        reply.finished.connect(loop.quit)
+        loop.exec()
+
+        if reply.error() == reply.NetworkError.NoError:
+            content_type = reply.header(QNetworkRequest.ContentTypeHeader)
+
+            if isinstance(content_type, bytes):
+                content_type = content_type.decode()
+
+            ext = CONTENT_TYPE_TO_EXT.get(content_type, ".bin")
+            file_path = os.path.join("stickers", self.pack_name,
+                                     f"thumbnail{ext}")
+            with open(file_path, "wb") as f:
+                f.write(bytes(reply.readAll()))
+
+            self.progress.emit(1)
+
+        self.thread_done.emit()
+
+
 class DownloadPack(QObject):
     percent_changed = Signal(int)
     download_failed = Signal(str)
@@ -122,6 +160,8 @@ class DownloadPack(QObject):
 
                     chunks = _chunk_list(downloadable)
                     self._threads = [_DownloadThread(chunk, pack_name) for chunk in chunks]
+                    # noinspection PyTypeChecker
+                    self._threads.append(_DownloadThumbnail(body.get("thumbnail"), pack_name))
 
                     for thread in self._threads:
                         thread.progress.connect(on_item_processed)
