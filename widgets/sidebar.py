@@ -1,5 +1,6 @@
 import glob
 import json
+import os
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QPixmap, QGuiApplication
@@ -94,43 +95,66 @@ class Sidebar(QFrame):
     def get_sticker_packs(self):
         self._clear_layout()
         if not self.current_user.logged_in:
-            return
+            packs = os.listdir("./stickers")
+            for pack in packs:
+                button = QPushButton("")
+                button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
+                button.setCursor(Qt.CursorShape.PointingHandCursor)
+                button.setStyleSheet("""
+                                        QPushButton {
+                                            background-color: transparent;
+                                            border: none;
+                                            border-radius: 5px;
+                                        }
+                                        QPushButton:hover {
+                                            background-color: #333;
+                                        }
+                                        QPushButton:pressed {
+                                            background-color: #444;
+                                        }
+                                    """)
+                button.clicked.connect(lambda checked=False, name=pack: self.body.load_stickers(name))
+                self.content_layout.addWidget(button)
+                thumbnail = glob.glob(f"./stickers/{pack}/thumbnail.*")
+                button.setIcon(QIcon(thumbnail[0]))
+                button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
 
-        url = f"{SERVER}/api/stickers/get_packs"
-        reply = request_helpers.make_request(url)
+        else:
+            url = f"{SERVER}/api/stickers/get_packs"
+            reply = request_helpers.make_request(url)
 
-        def on_finished():
-            try:
-                if reply.error() != reply.NetworkError.NoError:
-                    return
-                data = bytes(reply.readAll())
-                payload = json.loads(data.decode("utf-8")) if data else {}
-                for pack in payload.get("packs", []):
-                    button = QPushButton("")
-                    button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
-                    button.setCursor(Qt.CursorShape.PointingHandCursor)
-                    button.setStyleSheet("""
-                        QPushButton {
-                            background-color: transparent;
-                            border: none;
-                            border-radius: 5px;
-                        }
-                        QPushButton:hover {
-                            background-color: #333;
-                        }
-                        QPushButton:pressed {
-                            background-color: #444;
-                        }
-                    """)
-                    button.clicked.connect(lambda checked=False, name=pack["name"]: self.body.load_stickers(name))
-                    self.content_layout.addWidget(button)
-                    thumbnail = glob.glob(f"./stickers/{pack['name']}/thumbnail.*")
-                    if not thumbnail:
-                        self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
-                    else:
-                        button.setIcon(QIcon(thumbnail[0]))
-                    button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
-            finally:
-                reply.deleteLater()
+            def on_finished():
+                try:
+                    if reply.error() != reply.NetworkError.NoError:
+                        return
+                    data = bytes(reply.readAll())
+                    payload = json.loads(data.decode("utf-8")) if data else {}
+                    for pack in payload.get("packs", []):
+                        button = QPushButton("")
+                        button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
+                        button.setCursor(Qt.CursorShape.PointingHandCursor)
+                        button.setStyleSheet("""
+                            QPushButton {
+                                background-color: transparent;
+                                border: none;
+                                border-radius: 5px;
+                            }
+                            QPushButton:hover {
+                                background-color: #333;
+                            }
+                            QPushButton:pressed {
+                                background-color: #444;
+                            }
+                        """)
+                        button.clicked.connect(lambda checked=False, name=pack["name"]: self.body.load_stickers(name))
+                        self.content_layout.addWidget(button)
+                        thumbnail = glob.glob(f"./stickers/{pack['name']}/thumbnail.*")
+                        if not thumbnail:
+                            self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
+                        else:
+                            button.setIcon(QIcon(thumbnail[0]))
+                        button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
+                finally:
+                    reply.deleteLater()
 
-        reply.finished.connect(on_finished)
+            reply.finished.connect(on_finished)
