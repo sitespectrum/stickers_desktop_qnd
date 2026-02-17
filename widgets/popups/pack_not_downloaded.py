@@ -33,9 +33,11 @@ class PackNotDownloaded(QFrame):
             }
         """)
 
-        self.title = QLabel("This pack is not downloaded yet.")
+        self.title = QLabel("This pack is not downloaded.")
+        self.title.setStyleSheet(f"font-weight: bold; font-size: {11 * self.scaleFactor}px;")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.description = QLabel("Click on the button below to download it.")
+        self.description = QLabel("Click the button below to download and use this pack.")
+        self.description.setStyleSheet(f"font-size: {9 * self.scaleFactor}px;")
         self.description.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.download_button = QPushButton("Download")

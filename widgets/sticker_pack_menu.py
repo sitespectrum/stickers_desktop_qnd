@@ -8,10 +8,10 @@ class PackMenu(QMenu):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint | Qt.WindowType.NoDropShadowWindowHint)
 
-        self.redownload = self.addAction("Redownload")
+        self.redownload = self.addAction("Redownload files")
         self.download = self.addAction("Download")
         self.addSeparator()
-        self.delete_action = self.addAction("Delete")
+        self.delete_action = self.addAction("Delete local files")
         self.remove_action = self.addAction("Remove from profile")
         self.add_action = self.addAction("Add to profile")
 
