@@ -1,14 +1,15 @@
 import json
 import os
 import shutil
-import time
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar
+from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QScrollArea, QWidget, \
+    QApplication
 
-from widgets import sidebar
+from caches.sticker_icon_cache import StickerIconCache
 from globals.constants import SERVER
+from globals.user import user
 from widgets.popups import pack_not_downloaded, download_failed
 from modules import download_pack, request_helpers
 
@@ -20,6 +21,10 @@ class Body(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
+
+        self.icon_cache = StickerIconCache(max_size=500)
+
+        self.current_user = user
 
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
@@ -55,19 +60,71 @@ class Body(QFrame):
             }
             QProgressBar::chunk {
                 background-color: #333;
-                width: 4px;
                 border-radius: 2px;
                 margin: 0.5px;
             }
         """)
 
+        self.base_layout = QVBoxLayout()
+        self.setLayout(self.base_layout)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setObjectName("scroll_area")
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setViewportMargins(0, 0, 0, 0)
+        self.scroll_area.viewport().setContentsMargins(0, 0, 0, 0)
+        self.scroll_area.setStyleSheet("""
+            QScrollBar:vertical {
+                width: 5px;
+            }
+            QScrollBar::handle::vertical {
+                background: #333;
+                border-radius: 2px;
+                border: none;
+            }
+            QScrollBar::handle::vertical::pressed {
+                background: #444;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: #000;
+                border-radius: 2px;
+            }
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+            QScrollArea QWidget {
+                background: transparent;
+                border: none;
+            }
+            QPushButton { 
+                background-color: transparent; 
+                border: none; 
+                border-radius: 5px;
+            } 
+            QPushButton:hover { 
+                background-color: #333; 
+            }
+            QPushButton:pressed { 
+                background-color: #444; 
+            }
+        """)
+
+        self.scroll_content = QWidget()
+        self.scroll_content.setContentsMargins(0, 0, 0, 0)
+
+        self.scroll_area.setWidget(self.scroll_content)
+        self.base_layout.addWidget(self.scroll_area)
+
         self.layout = QGridLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_content.setLayout(self.layout)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self.welcome = QLabel("Welcome back! To begin, select a sticker pack from the left.")
         self.layout.addWidget(self.welcome)
 
-        self.setLayout(self.layout)
 
     def _clear_layout(self):
         while self.layout.count():
@@ -81,6 +138,7 @@ class Body(QFrame):
         if progress == 100:
             self.progress_bar.setVisible(False)
         else:
+            self.progress_bar.raise_()
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(progress)
 
@@ -115,15 +173,15 @@ class Body(QFrame):
             self.downloader.download_pack(pack)
         else:
             print("Pack already downloaded")
-        if not no_switch:
+        if self.current_pack == pack:
             self.load_stickers(pack)
 
     def delete_pack(self, pack: str):
         shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
         if pack == self.current_pack:
-            self._clear_layout()
+            self.load_stickers(pack)
 
-        if self.sidebar is not None:
+        if self.sidebar is not None and not self.current_user.logged_in:
             self.sidebar.get_sticker_packs()
 
     def redownload_pack(self, pack: str):
@@ -133,19 +191,64 @@ class Body(QFrame):
     def load_stickers(self, sticker_pack: str):
         if self.downloader.downloading:
             return
+
         self.pack_not_downloaded.setVisible(False)
         self.current_pack = sticker_pack
         self._clear_layout()
-        if not os.path.exists(os.path.join(os.getcwd(), "stickers", sticker_pack)):
+
+        folder = os.path.join("stickers", sticker_pack)
+
+        if not os.path.exists(folder):
             self.pack_not_downloaded.setVisible(True)
-            # noinspection PyBroadException
             try:
                 self.pack_not_downloaded.download_button.clicked.disconnect()
             except Exception:
                 pass
-            self.pack_not_downloaded.download_button.clicked.connect(lambda checked=False, pack=sticker_pack: self.download_pack(pack))
+            self.pack_not_downloaded.download_button.clicked.connect(
+                lambda checked=False, pack=sticker_pack: self.download_pack(pack)
+            )
             self.pack_not_downloaded.raise_()
-        pass
+            return
+
+        def get_order(filename):
+            return int(filename.split("_")[0])
+
+        files = sorted(
+            [f for f in os.listdir(folder) if f != "info.json" and "thumbnail" not in f],
+            key=get_order
+        )
+
+        max_value = 100
+        chunk_size = max_value // len(files)
+        current_value = 0
+
+        button_size = int(50 * self.scaleFactor)
+        col_max = max(1, self.scroll_content.width() // button_size)
+
+        row, col = 0, 0
+
+        self.scroll_content.setUpdatesEnabled(False)
+
+        for file in files:
+            self.on_progress(current_value)
+            QApplication.processEvents()
+            if col >= col_max:
+                col = 0
+                row += 1
+
+            button = QPushButton()
+            button.setFixedSize(button_size, button_size)
+            button.setIcon(self.icon_cache.get_icon(os.path.join(folder, file)))
+            button.setIconSize(QSize(int(45 * self.scaleFactor), int(45 * self.scaleFactor)))
+            self.layout.addWidget(button, row, col)
+
+            col += 1
+            current_value += chunk_size
+        self.on_progress(100)
+        self.scroll_content.setUpdatesEnabled(True)
+        self.scroll_content.update()
+
+        QTimer.singleShot(0, lambda: self.scroll_area.verticalScrollBar().setValue(0))
 
     def resizeEvent(self, event):
         child = self.pack_not_downloaded
