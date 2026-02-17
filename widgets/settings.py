@@ -81,6 +81,7 @@ class Settings(QFrame):
         self.close_button.setIconSize(QSize(icon_px, icon_px))
 
         self.user_label = QLabel("Not logged in")
+        self.user_label.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
 
         self.login_button = QPushButton("Login")
         self.login_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
@@ -106,7 +107,7 @@ class Settings(QFrame):
 
     def set_user(self, logged_in: bool = False):
         if logged_in:
-            self.user_label.setText(f"Logged in as {"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}")
+            self.user_label.setText(f"Logged in as <b>{"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}</b>")
             try:
                 self.login_button.clicked.disconnect()
             except RuntimeWarning:
