@@ -219,7 +219,8 @@ class Sidebar(QFrame):
                         button.customContextMenuRequested.connect(
                             lambda pos, btn=button, pack=pack["name"]: self.pack_context_menu_requested(pos, btn, pack)
                         )
-                    if os.listdir(os.path.join("stickers")) !=  [i["name"] for i in payload.get("packs", [])]:
+                    local_packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
+                    if local_packs:
                         separator = QWidget()
                         separator.setFixedHeight(int(1 * self.scaleFactor))
                         separator.setStyleSheet("background-color: #333;")
@@ -227,7 +228,7 @@ class Sidebar(QFrame):
                         self.content_layout.addWidget(separator)
                         self.content_layout.addSpacing(int(5 * self.scaleFactor))
 
-                        packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
+                        packs = local_packs
                         load_local_packs(packs)
                 finally:
                     reply.deleteLater()

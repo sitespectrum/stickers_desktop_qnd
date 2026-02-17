@@ -24,8 +24,6 @@ class Body(QFrame):
 
         self.icon_cache = StickerIconCache(max_size=500)
 
-        self.current_user = user
-
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
 
@@ -125,6 +123,8 @@ class Body(QFrame):
         self.welcome = QLabel("Welcome back! To begin, select a sticker pack from the left.")
         self.layout.addWidget(self.welcome)
 
+        self.current_user = user
+        self.current_user.logged_inChanged.connect(self._clear_layout)
 
     def _clear_layout(self):
         while self.layout.count():
