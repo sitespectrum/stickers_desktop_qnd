@@ -2,6 +2,7 @@ from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
 from widgets import title_bar, tray_menu, settings, sidebar, body
+from widgets.popups import add_pack
 
 
 class MainWindow(QMainWindow):
@@ -52,8 +53,13 @@ class MainWindow(QMainWindow):
 
         self.main = body.Body()
 
-        self.sidebar = sidebar.Sidebar(body_widget=self.main)
+        self.add_pack_widget = add_pack.AddPack(parent=self.central_widget, body_widget=self.main)
+        self.add_pack_widget.move((self.width() - self.add_pack_widget.width()) // 2, (self.height() - self.add_pack_widget.height()) // 2)
+
+        self.sidebar = sidebar.Sidebar(body_widget=self.main, add_pack_widget=self.add_pack_widget)
         self.body_layout.addWidget(self.sidebar)
+
+        self.add_pack_widget.sidebar_widget = self.sidebar
 
         self.main.sidebar = self.sidebar
 

@@ -152,12 +152,12 @@ class Body(QFrame):
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()
 
-    def download_pack(self, pack: str = "", no_switch=False):
+    def download_pack(self, pack: str = "", no_switch=False, add=False, refresh_sidebar=False):
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
 
-            r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}")
+            r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true")
             os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:
@@ -170,6 +170,8 @@ class Body(QFrame):
             self.downloader.pack_downloaded.disconnect()
             if not no_switch:
                 self.downloader.pack_downloaded.connect(self.load_stickers)
+            if refresh_sidebar:
+                self.downloader.pack_downloaded.connect(self.sidebar.get_sticker_packs)
             self.downloader.download_pack(pack)
         else:
             print("Pack already downloaded")
@@ -186,7 +188,7 @@ class Body(QFrame):
 
     def redownload_pack(self, pack: str):
         shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
-        self.download_pack(pack)
+        self.download_pack(pack, no_switch=True)
 
     def load_stickers(self, sticker_pack: str):
         if self.downloader.downloading:

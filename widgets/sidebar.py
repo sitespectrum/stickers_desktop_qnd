@@ -12,10 +12,11 @@ from modules import request_helpers
 from modules.ui_helpers import svg_to_icon
 
 from widgets import body, sticker_pack_menu
+from widgets.popups import add_pack
 
 
 class Sidebar(QFrame):
-    def __init__(self, body_widget: body.Body = None):
+    def __init__(self, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
@@ -25,6 +26,7 @@ class Sidebar(QFrame):
         self.user_packs = []
 
         self.body = body_widget
+        self.add_pack_widget = add_pack_widget
 
         self._thumbnail_cache: dict[str, QIcon] = {}
         self._pending_thumbnail: dict[object, QPushButton] = {}
@@ -99,6 +101,8 @@ class Sidebar(QFrame):
 
     def add_pack(self, pack_name: str = ""):
         if not pack_name:
+            self.add_pack_widget.open_popup()
+            self.add_pack_widget.raise_()
             return
         r = request_helpers.make_request(f"{SERVER}/api/stickers/add_pack", "POST", json_data={"pack_name": pack_name})
         def on_req_finished():
@@ -199,6 +203,7 @@ class Sidebar(QFrame):
             }
         """)
         add_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
+        add_button.clicked.connect(lambda checked=False: self.add_pack())
 
         refresh_button = QPushButton()
         refresh_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
