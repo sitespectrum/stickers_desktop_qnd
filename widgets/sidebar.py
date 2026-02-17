@@ -21,6 +21,8 @@ class Sidebar(QFrame):
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
+        self.user_packs = []
+
         self.body = body_widget
 
         self._thumbnail_cache: dict[str, QIcon] = {}
@@ -108,6 +110,12 @@ class Sidebar(QFrame):
         self.pack_context_menu.delete_action.triggered.connect(lambda checked=False, pack=pack: self.body.delete_pack(pack))
 
         self.pack_context_menu.remove_action.setVisible(True)
+        self.pack_context_menu.add_action.setVisible(True)
+        if pack not in self.user_packs:
+            self.pack_context_menu.remove_action.setVisible(False)
+        else:
+            self.pack_context_menu.add_action.setVisible(False)
+
         self.pack_context_menu.remove_action.triggered.disconnect()
 
         global_pos = button.mapToGlobal(QPoint(0, button.height()))
@@ -122,14 +130,10 @@ class Sidebar(QFrame):
         self.pack_context_menu.show()
 
     def get_sticker_packs(self):
+        self.user_packs = []
         self._clear_layout()
-        if not self.current_user.logged_in:
-            packs = []
-            if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
-                pass
-            else:
-                packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
 
+        def load_local_packs(packs):
             for pack in packs:
                 with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "r") as f:
                     info = json.loads(f.read())
@@ -162,6 +166,13 @@ class Sidebar(QFrame):
                     lambda pos, btn=button, pack=pack: self.pack_context_menu_requested(pos, btn, pack)
                 )
 
+        if not self.current_user.logged_in:
+            packs = []
+            if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
+                pass
+            else:
+                packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
+                load_local_packs(packs)
 
         else:
             url = f"{SERVER}/api/stickers/get_packs"
@@ -173,6 +184,7 @@ class Sidebar(QFrame):
                         return
                     data = bytes(reply.readAll())
                     payload = json.loads(data.decode("utf-8")) if data else {}
+                    self.user_packs = [i["name"] for i in payload.get("packs", [])]
                     for pack in payload.get("packs", []):
                         button = QPushButton("")
                         button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
@@ -207,6 +219,16 @@ class Sidebar(QFrame):
                         button.customContextMenuRequested.connect(
                             lambda pos, btn=button, pack=pack["name"]: self.pack_context_menu_requested(pos, btn, pack)
                         )
+                    if os.listdir(os.path.join("stickers")) !=  [i["name"] for i in payload.get("packs", [])]:
+                        separator = QWidget()
+                        separator.setFixedHeight(int(1 * self.scaleFactor))
+                        separator.setStyleSheet("background-color: #333;")
+                        self.content_layout.addSpacing(int(5 * self.scaleFactor))
+                        self.content_layout.addWidget(separator)
+                        self.content_layout.addSpacing(int(5 * self.scaleFactor))
+
+                        packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
+                        load_local_packs(packs)
                 finally:
                     reply.deleteLater()
 

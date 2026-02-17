@@ -181,7 +181,7 @@ class Body(QFrame):
         if pack == self.current_pack:
             self.load_stickers(pack)
 
-        if self.sidebar is not None and not self.current_user.logged_in:
+        if self.sidebar is not None:
             self.sidebar.get_sticker_packs()
 
     def redownload_pack(self, pack: str):

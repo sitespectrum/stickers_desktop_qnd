@@ -13,6 +13,7 @@ class PackMenu(QMenu):
         self.addSeparator()
         self.delete_action = self.addAction("Delete")
         self.remove_action = self.addAction("Remove from profile")
+        self.add_action = self.addAction("Add to profile")
 
         self.setStyleSheet("""
             QMenu {
