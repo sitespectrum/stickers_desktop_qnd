@@ -3,12 +3,13 @@ import json
 import os
 
 from PySide6.QtCore import Qt, QSize, QPoint
-from PySide6.QtGui import QIcon, QPixmap, QGuiApplication
+from PySide6.QtGui import QIcon, QPixmap, QGuiApplication, QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea
 
 from globals.user import user
 from globals.constants import SERVER
 from modules import request_helpers
+from modules.ui_helpers import svg_to_icon
 
 from widgets import body, sticker_pack_menu
 
@@ -96,27 +97,75 @@ class Sidebar(QFrame):
 
         reply.finished.connect(on_finished)
 
+    def add_pack(self, pack_name: str = ""):
+        if not pack_name:
+            return
+        r = request_helpers.make_request(f"{SERVER}/api/stickers/add_pack", "POST", json_data={"pack_name": pack_name})
+        def on_req_finished():
+            if r.error() != r.NetworkError.NoError:
+                return
+            self.get_sticker_packs()
+
+        r.finished.connect(on_req_finished)
+
+    def remove_pack(self, pack_name: str = ""):
+        if not pack_name:
+            return
+        r = request_helpers.make_request(f"{SERVER}/api/stickers/remove_pack/{pack_name}", "DELETE")
+        def on_req_finished():
+            if r.error() != r.NetworkError.NoError:
+                return
+            self.get_sticker_packs()
+
+        r.finished.connect(on_req_finished)
+
+
     def pack_context_menu_requested(self, pos, button, pack):
         self.pack_context_menu.download.setVisible(True)
-        self.pack_context_menu.download.triggered.disconnect()
+        try:
+            self.pack_context_menu.download.triggered.disconnect()
+        except (TypeError, RuntimeError, RuntimeWarning):
+            pass
         self.pack_context_menu.download.triggered.connect(lambda checked=False, pack=pack: self.body.download_pack(pack, no_switch=True))
-
         self.pack_context_menu.redownload.setVisible(True)
-        self.pack_context_menu.redownload.triggered.disconnect()
+        try:
+            self.pack_context_menu.redownload.triggered.disconnect()
+        except (TypeError, RuntimeError, RuntimeWarning):
+            pass
         self.pack_context_menu.redownload.triggered.connect(lambda checked=False, pack=pack: self.body.redownload_pack(pack))
-
         self.pack_context_menu.delete_action.setVisible(True)
-        self.pack_context_menu.delete_action.triggered.disconnect()
+        try:
+            self.pack_context_menu.delete_action.triggered.disconnect()
+        except (TypeError, RuntimeError, RuntimeWarning):
+            pass
         self.pack_context_menu.delete_action.triggered.connect(lambda checked=False, pack=pack: self.body.delete_pack(pack))
-
         self.pack_context_menu.remove_action.setVisible(True)
         self.pack_context_menu.add_action.setVisible(True)
+        try:
+            self.pack_context_menu.add_action.triggered.disconnect()
+        except (TypeError, RuntimeError, RuntimeWarning):
+            pass
+        try:
+            self.pack_context_menu.remove_action.triggered.disconnect()
+        except (TypeError, RuntimeError, RuntimeWarning):
+            pass
+
         if pack not in self.user_packs:
             self.pack_context_menu.remove_action.setVisible(False)
+            self.pack_context_menu.add_action.setVisible(True)
+            self.pack_context_menu.add_action.triggered.connect(
+                lambda checked=False, pack=pack: self.add_pack(pack)
+            )
         else:
             self.pack_context_menu.add_action.setVisible(False)
+            self.pack_context_menu.remove_action.setVisible(True)
+            self.pack_context_menu.remove_action.triggered.connect(
+                lambda checked=False, pack=pack: self.remove_pack(pack)
+            )
 
-        self.pack_context_menu.remove_action.triggered.disconnect()
+        if not self.current_user.logged_in:
+            self.pack_context_menu.add_action.setVisible(False)
+            self.pack_context_menu.remove_action.setVisible(False)
 
         global_pos = button.mapToGlobal(QPoint(0, button.height()))
         self.pack_context_menu.move(global_pos)
@@ -128,6 +177,58 @@ class Sidebar(QFrame):
             self.pack_context_menu.delete_action.setVisible(False)
 
         self.pack_context_menu.show()
+
+    def add_manage_buttons(self):
+
+        button_color = QColor("#E6E6E6")
+
+        add_button = QPushButton()
+        add_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
+        add_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        add_button.setStyleSheet("""
+            QPushButton {
+                background-color: #111;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #333;
+            }
+            QPushButton:pressed {
+                background-color: #444;
+            }
+        """)
+        add_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
+
+        refresh_button = QPushButton()
+        refresh_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
+        refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        refresh_button.setStyleSheet("""
+                    QPushButton {
+                        background-color: #111;
+                        border: none;
+                        border-radius: 5px;
+                    }
+                    QPushButton:hover {
+                        background-color: #333;
+                    }
+                    QPushButton:pressed {
+                        background-color: #444;
+                    }
+                """)
+        refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"),
+                                       QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
+        refresh_button.clicked.connect(self.get_sticker_packs)
+
+        separator = QWidget()
+        separator.setFixedHeight(int(1 * self.scaleFactor))
+        separator.setStyleSheet("background-color: #333;")
+        self.content_layout.addSpacing(int(5 * self.scaleFactor))
+        self.content_layout.addWidget(separator)
+        self.content_layout.addSpacing(int(5 * self.scaleFactor))
+        self.content_layout.addWidget(add_button)
+        self.content_layout.addSpacing(int(2 * self.scaleFactor))
+        self.content_layout.addWidget(refresh_button)
 
     def get_sticker_packs(self):
         self.user_packs = []
@@ -173,6 +274,7 @@ class Sidebar(QFrame):
             else:
                 packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
                 load_local_packs(packs)
+            self.add_manage_buttons()
 
         else:
             url = f"{SERVER}/api/stickers/get_packs"
@@ -219,17 +321,19 @@ class Sidebar(QFrame):
                         button.customContextMenuRequested.connect(
                             lambda pos, btn=button, pack=pack["name"]: self.pack_context_menu_requested(pos, btn, pack)
                         )
-                    local_packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
-                    if local_packs:
-                        separator = QWidget()
-                        separator.setFixedHeight(int(1 * self.scaleFactor))
-                        separator.setStyleSheet("background-color: #333;")
-                        self.content_layout.addSpacing(int(5 * self.scaleFactor))
-                        self.content_layout.addWidget(separator)
-                        self.content_layout.addSpacing(int(5 * self.scaleFactor))
+                    if os.path.exists("stickers"):
+                        local_packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
+                        if local_packs:
+                            separator = QWidget()
+                            separator.setFixedHeight(int(1 * self.scaleFactor))
+                            separator.setStyleSheet("background-color: #333;")
+                            self.content_layout.addSpacing(int(5 * self.scaleFactor))
+                            self.content_layout.addWidget(separator)
+                            self.content_layout.addSpacing(int(5 * self.scaleFactor))
 
-                        packs = local_packs
-                        load_local_packs(packs)
+                            packs = local_packs
+                            load_local_packs(packs)
+                    self.add_manage_buttons()
                 finally:
                     reply.deleteLater()
 

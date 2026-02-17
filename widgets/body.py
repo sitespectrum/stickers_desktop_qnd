@@ -185,7 +185,7 @@ class Body(QFrame):
             self.sidebar.get_sticker_packs()
 
     def redownload_pack(self, pack: str):
-        self.delete_pack(pack)
+        shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
         self.download_pack(pack)
 
     def load_stickers(self, sticker_pack: str):
