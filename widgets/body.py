@@ -38,6 +38,8 @@ class Body(QFrame):
 
         self.sidebar = None
 
+        self.download_running = False
+
         self.download_failed = download_failed.DownloadFailed(parent=self)
 
         self.setStyleSheet("""
@@ -146,14 +148,22 @@ class Body(QFrame):
         if not failed:
             return
         if os.path.exists(os.path.join(os.getcwd(), "stickers", self.current_pack)):
+            self.download_running = False
             os.rmdir(os.path.join(os.getcwd(), "stickers", self.current_pack))
             self.load_stickers(self.current_pack)
             self.download_failed.show()
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()
 
+    def set_download_running(self, running):
+        self.download_running = running
+
     def download_pack(self, pack: str = "", no_switch=False, add=False, refresh_sidebar=False):
+        if self.download_running:
+            print("Download already running")
+            return
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
+            self.download_running = True
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
                 os.mkdir(os.path.join(os.getcwd(), "stickers"))
 
@@ -172,6 +182,7 @@ class Body(QFrame):
                 self.downloader.pack_downloaded.connect(self.load_stickers)
             if refresh_sidebar:
                 self.downloader.pack_downloaded.connect(self.sidebar.get_sticker_packs)
+            self.downloader.pack_downloaded.connect(lambda: self.set_download_running(False))
             self.downloader.download_pack(pack)
         else:
             print("Pack already downloaded")

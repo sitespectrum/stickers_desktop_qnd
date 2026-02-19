@@ -116,6 +116,10 @@ class AddPack(QFrame):
         self.download_button.setFixedSize(int(150 * self.scaleFactor), int(20 * self.scaleFactor))
         self.download_button.clicked.connect(self.download_pack)
 
+        self.download_already_running_label = QLabel("Another download is already in progress")
+        self.download_already_running_label.setStyleSheet(f"font-size: {10 * self.scaleFactor}px; color: #ff5555;")
+        self.download_already_running_label.setHidden(True)
+
         self.layout.addWidget(self.close_button)
         self.layout.addWidget(self.title)
         self.layout.addSpacing(int(10 * self.scaleFactor))
@@ -124,6 +128,7 @@ class AddPack(QFrame):
         self.layout.addWidget(self.add_button)
         self.layout.addWidget(self.download_and_add_button)
         self.layout.addWidget(self.download_button)
+        self.layout.addWidget(self.download_already_running_label)
 
     def update_buttons(self, logged_in: bool):
         if logged_in:
@@ -136,12 +141,20 @@ class AddPack(QFrame):
             self.download_button.setVisible(True)
 
     def download_pack(self):
+        self.download_already_running_label.setHidden(True)
         pack = self.pack_input.text()
+        if self.body_widget.downloader.downloading:
+            self.download_already_running_label.setHidden(False)
+            return
         self.close_popup()
         self.body_widget.download_pack(pack, add=True, refresh_sidebar=True)
 
     def add_and_download_pack(self):
+        self.download_already_running_label.setHidden(True)
         if not self.pack_input.text():
+            return
+        if self.body_widget.downloader.downloading:
+            self.download_already_running_label.setHidden(False)
             return
         self.close_popup()
         pack = self.pack_input.text()
@@ -160,6 +173,7 @@ class AddPack(QFrame):
         self.setVisible(False)
 
     def open_popup(self):
+        self.download_already_running_label.setHidden(True)
         self.setVisible(True)
         self.pack_input.setFocus()
         self.pack_input.clear()
