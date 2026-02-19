@@ -1,7 +1,7 @@
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QEvent
-from widgets import title_bar, tray_menu, settings, sidebar, body
+from widgets import title_bar, tray_menu, settings, sidebar, body, toast
 from widgets.popups import add_pack
 
 
@@ -19,6 +19,10 @@ class MainWindow(QMainWindow):
         self.scaleFactor = self.screen.devicePixelRatio()
         self.resize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setFixedSize(self.size())
+
+        self.toast_provider = toast.QToastProvider(parent=self)
+        self.toast_provider.resize(self.size())
+        self.toast_provider.show()
 
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('utils/icon.png'))
@@ -51,7 +55,7 @@ class MainWindow(QMainWindow):
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.body.setLayout(self.body_layout)
 
-        self.main = body.Body()
+        self.main = body.Body(toast_provider=self.toast_provider)
 
         self.add_pack_widget = add_pack.AddPack(parent=self.central_widget, body_widget=self.main)
         self.add_pack_widget.move((self.width() - self.add_pack_widget.width()) // 2, (self.height() - self.add_pack_widget.height()) // 2)

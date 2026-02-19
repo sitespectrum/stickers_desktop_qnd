@@ -47,15 +47,16 @@ class _DownloadThread(QThread):
             loop.exec()
 
             if reply.error() == reply.NetworkError.NoError:
-                content_type = reply.header(QNetworkRequest.ContentTypeHeader)
+                content_type = reply.header(QNetworkRequest.KnownHeaders.ContentTypeHeader)
 
                 if isinstance(content_type, bytes):
                     content_type = content_type.decode()
 
                 ext = CONTENT_TYPE_TO_EXT.get(content_type, ".bin")
                 file_path = os.path.join("stickers", self.pack_name, f"{file["id"]}_{self.pack_name}+{emoji.demojize(file["emoji"]).replace(":", "")}{ext}")
-                with open(file_path, "wb") as f:
-                    f.write(bytes(reply.readAll()))
+                if os.path.exists(os.path.join("stickers", self.pack_name)):
+                    with open(file_path, "wb") as f:
+                        f.write(bytes(reply.readAll()))
 
                 self.progress.emit(1)
 
@@ -84,7 +85,7 @@ class _DownloadThumbnail(QThread):
         loop.exec()
 
         if reply.error() == reply.NetworkError.NoError:
-            content_type = reply.header(QNetworkRequest.ContentTypeHeader)
+            content_type = reply.header(QNetworkRequest.KnownHeaders.ContentTypeHeader)
 
             if isinstance(content_type, bytes):
                 content_type = content_type.decode()

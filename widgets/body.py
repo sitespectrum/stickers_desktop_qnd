@@ -10,12 +10,13 @@ from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar, QPushBu
 from caches.sticker_icon_cache import StickerIconCache
 from globals.constants import SERVER
 from globals.user import user
+from widgets import toast
 from widgets.popups import pack_not_downloaded, download_failed
 from modules import download_pack, request_helpers
 
 
 class Body(QFrame):
-    def __init__(self):
+    def __init__(self, toast_provider: toast.QToastProvider):
         super().__init__()
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -23,6 +24,8 @@ class Body(QFrame):
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
         self.icon_cache = StickerIconCache(max_size=500)
+
+        self.toast_provider = toast_provider
 
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
@@ -154,7 +157,7 @@ class Body(QFrame):
 
     def download_pack(self, pack: str = "", no_switch=False, add=False, refresh_sidebar=False):
         if self.downloader.downloading:
-            print("Download already running")
+            self.toast_provider.show_toast("Another pack is already downloading", variant="warning", timeout=1500)
             return
         if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
             if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
@@ -182,7 +185,11 @@ class Body(QFrame):
             self.load_stickers(pack)
 
     def delete_pack(self, pack: str):
+        with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "r") as f:
+            payload = json.loads(f.read())
+            pack_title = payload["title"]
         shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
+        self.toast_provider.show_toast(f"Deleted local files for pack {pack_title}")
         if pack == self.current_pack:
             self.load_stickers(pack)
 
@@ -222,6 +229,10 @@ class Body(QFrame):
             [f for f in os.listdir(folder) if f != "info.json" and "thumbnail" not in f],
             key=get_order
         )
+
+        if not files:
+            self.toast_provider.show_toast("This pack is empty", variant="warning")
+            return
 
         max_value = 100
         chunk_size = max_value // len(files)
