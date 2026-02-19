@@ -1,6 +1,5 @@
 import json
 import os
-import time
 
 import emoji
 from PySide6.QtCore import QObject, Signal, QThread, QEventLoop
