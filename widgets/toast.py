@@ -88,9 +88,9 @@ class QToastProvider(QFrame):
         self.setMouseTracking(True)
 
         self.layout = QVBoxLayout(self)
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         self.layout.setSpacing(8)
-        self.layout.setContentsMargins(5, 5, 5, 5)
+        self.layout.setContentsMargins(5, 5, 20, 5)
 
         self.toasts = []
 

@@ -12,7 +12,7 @@ from globals.constants import SERVER
 from globals.user import user
 from widgets import toast
 from widgets.popups import pack_not_downloaded, download_failed
-from modules import download_pack, request_helpers
+from modules import download_pack, request_helpers, clipboard
 
 
 class Body(QFrame):
@@ -128,6 +128,10 @@ class Body(QFrame):
 
         self.current_user = user
         self.current_user.logged_inChanged.connect(self._clear_layout)
+
+    def copy_sticker(self, pack: str, sticker: str):
+        clipboard.copy_image(os.path.join("stickers", pack, sticker))
+        self.toast_provider.show_toast("Copied sticker to clipboard")
 
     def _clear_layout(self):
         while self.layout.count():
@@ -256,6 +260,7 @@ class Body(QFrame):
             button.setFixedSize(button_size, button_size)
             button.setIcon(self.icon_cache.get_icon(os.path.join(folder, file)))
             button.setIconSize(QSize(int(45 * self.scaleFactor), int(45 * self.scaleFactor)))
+            button.clicked.connect(lambda checked=False, pack=sticker_pack, file=file: self.copy_sticker(pack, file))
             self.layout.addWidget(button, row, col)
 
             col += 1
