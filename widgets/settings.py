@@ -10,16 +10,19 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
 from globals.constants import SERVER
+from widgets import toast
 
 
 class Settings(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self,toast_provider: toast.QToastProvider , parent=None):
         super().__init__(parent)
         self.current_user = user.user
         self.current_user.logged_inChanged.connect(self.set_user)
         self.server_running = False
         self.setObjectName("settings")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        self.toast_provider = toast_provider
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
@@ -133,6 +136,7 @@ class Settings(QFrame):
             status = request_helpers.get_status_code(r)
             if status == 200:
                 self.current_user.logged_in = False
+                self.toast_provider.show_toast("Logged out successfully", variant="success")
             r.deleteLater()
 
         r.finished.connect(req_finished)
@@ -172,8 +176,9 @@ class Settings(QFrame):
         )
 
         def req_finished():
+            if r.error() == r.NetworkError.NoError:
+                self.get_user()
             r.deleteLater()
-            self.get_user()
 
         r.finished.connect(req_finished)
 

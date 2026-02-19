@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.settings_widget = settings.Settings(parent=self.central_widget)
+        self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
 
     def toggle_settings(self):
         if self.settings_widget.settings_open:

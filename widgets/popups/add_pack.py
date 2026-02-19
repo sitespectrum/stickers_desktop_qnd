@@ -146,8 +146,7 @@ class AddPack(QFrame):
         if self.body_widget.downloader.downloading:
             self.download_already_running_label.setHidden(False)
             return
-        self.close_popup()
-        self.body_widget.download_pack(pack, add=True, refresh_sidebar=True)
+        self.body_widget.download_pack(pack, add=True, refresh_sidebar=True, close_popup=self.close_popup)
 
     def add_and_download_pack(self):
         self.download_already_running_label.setHidden(True)
@@ -156,10 +155,9 @@ class AddPack(QFrame):
         if self.body_widget.downloader.downloading:
             self.download_already_running_label.setHidden(False)
             return
-        self.close_popup()
         pack = self.pack_input.text()
         self.sidebar_widget.add_pack(pack)
-        self.body_widget.download_pack(pack)
+        self.body_widget.download_pack(pack, add=True, close_popup=self.close_popup)
 
     def add_pack(self):
         if not self.pack_input.text():
@@ -167,7 +165,6 @@ class AddPack(QFrame):
         if not self.sidebar_widget:
             return
         self.sidebar_widget.add_pack(self.pack_input.text())
-        self.close_popup()
 
     def close_popup(self):
         self.setVisible(False)
