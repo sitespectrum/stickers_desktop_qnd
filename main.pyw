@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.body.setLayout(self.body_layout)
 
-        self.main = body.Body(toast_provider=self.toast_provider)
+        self.main = body.Body(toast_provider=self.toast_provider, main_window=self)
 
         self.add_pack_widget = add_pack.AddPack(parent=self.central_widget, body_widget=self.main)
         self.add_pack_widget.move((self.width() - self.add_pack_widget.width()) // 2, (self.height() - self.add_pack_widget.height()) // 2)

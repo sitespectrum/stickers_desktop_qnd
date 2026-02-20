@@ -48,7 +48,7 @@ class Toast(QFrame):
     def _variant_style(self):
         styles = {
             "info": """
-                    background-color: rgb(40, 40, 40);
+                    background-color: #333;
                 """,
             "warning": """
                     background-color: #FF7B00;
