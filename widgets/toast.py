@@ -15,10 +15,14 @@ class Toast(QFrame):
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
+        self.setFixedWidth(int(200 * self.scaleFactor))
+
         self.setStyleSheet(self._variant_style())
 
         layout = QHBoxLayout(self)
-        layout.addWidget(QLabel(text))
+        self.label = QLabel(text)
+        self.label.setWordWrap(True)
+        layout.addWidget(self.label)
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
