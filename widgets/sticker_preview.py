@@ -45,10 +45,10 @@ class PreviewSticker(QFrame):
                 border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #222;
+                background-color: rgba(34, 34, 34, .5);
             }
             QPushButton:pressed {
-                background-color: #333;
+                background-color: rgba(51, 51, 51, .5);
             }
         """)
 
