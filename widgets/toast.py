@@ -1,6 +1,10 @@
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
-from PySide6.QtGui import QGuiApplication, QRegion
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout, QBoxLayout
+import os
+
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QSize
+from PySide6.QtGui import QGuiApplication, QRegion, QIcon, QColor
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout
+
+from modules.ui_helpers import svg_to_icon
 
 
 class Toast(QFrame):
@@ -17,12 +21,48 @@ class Toast(QFrame):
 
         self.setFixedWidth(int(200 * self.scaleFactor))
 
-        self.setStyleSheet(self._variant_style())
+        self.setStyleSheet(f"""
+            QFrame {{
+                border-radius: 6px;
+                font-size: {9 * self.scaleFactor}px;
+                background-color: #333;
+            }}
+        """)
 
-        layout = QHBoxLayout(self)
+        main_layout = QHBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        icon_files = {
+            "info": {
+                "icon": "info.svg",
+                "color": "#999",
+            },
+            "warning": {
+                "icon": "triangle-alert.svg",
+                "color": "#FF7B00",
+            },
+            "error": {
+                "icon": "octagon-alert.svg",
+                "color": "#DE0000",
+            },
+            "success": {
+                "icon": "check.svg",
+                "color": "#00A600",
+            },
+        }
+        icon = QIcon(svg_to_icon(
+            os.path.join("utils", "ui", icon_files[variant]["icon"]),
+            QSize(int(16 * self.scaleFactor),
+                  int(16 * self.scaleFactor)), QColor(icon_files[variant]["color"])))
+
+        self.setLayout(main_layout)
+        icon_widget = QLabel()
+        icon_widget.setFixedSize(int(16 * self.scaleFactor), int(16 * self.scaleFactor))
+        icon_widget.setPixmap(icon.pixmap(QSize(int(16 * self.scaleFactor), int(16 * self.scaleFactor))))
+        main_layout.addWidget(icon_widget)
+
         self.label = QLabel(text)
         self.label.setWordWrap(True)
-        layout.addWidget(self.label)
+        main_layout.addWidget(self.label)
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
@@ -44,33 +84,6 @@ class Toast(QFrame):
     def enterEvent(self, event):
         event.accept()
         self.fade_out_anim.start()
-
-    def _variant_style(self):
-        styles = {
-            "info": """
-                    background-color: #333;
-                """,
-            "warning": """
-                    background-color: #FF7B00;
-                    color: black;
-                """,
-            "error": """
-                    background-color: #590000;
-                """,
-            "success": """
-                    background-color: #005400;
-                """
-        }
-
-        style_data = styles.get(self.variant, styles["info"])
-
-        return f"""
-                QFrame {{
-                    border-radius: 6px;
-                    font-size: {9 * self.scaleFactor}px;
-                    {style_data}
-                }}
-            """
 
     def show_with_animation(self):
         self.fade_in_anim.start()
