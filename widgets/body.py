@@ -2,17 +2,31 @@ import json
 import os
 import shutil
 
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, QPoint, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QScrollArea, QWidget, \
-    QApplication
+    QApplication, QGraphicsBlurEffect
 
 from caches.sticker_icon_cache import StickerIconCache
 from globals.constants import SERVER
 from globals.user import user
-from widgets import toast
+from widgets import toast, sticker_preview
 from widgets.popups import pack_not_downloaded, download_failed
 from modules import download_pack, request_helpers, clipboard
+
+
+def get_rel_pos(widget, parent, main_window):
+    # Get the widget's position relative to the scrollbar
+    global_position_widget = widget.mapToGlobal(QPoint(0, 0))
+    local_position_widget = parent.mapFromGlobal(global_position_widget)
+
+    # Get the scrollbar's position relative to the main window
+    global_position_scrollbar = parent.mapToGlobal(QPoint(0, 0))
+    local_position_scrollbar = main_window.mapFromGlobal(global_position_scrollbar)
+
+    # Combine the positions to get the widget's position relative to the main window
+    position_relative_to_main_window = local_position_scrollbar + local_position_widget
+    return position_relative_to_main_window
 
 
 class Body(QFrame):
@@ -39,7 +53,28 @@ class Body(QFrame):
         self.downloader.download_failed.connect(self.on_download_fail)
         self.downloader.percent_changed.connect(self.on_progress)
 
+        self.preview_sticker_widget = sticker_preview.PreviewSticker(parent=self)
+        self.preview_sticker_widget.customContextMenuRequested.connect(self.close_sticker_preview)
+
+        self.preview_open = False
+
         self.sidebar = None
+
+        self.blur_effect = QGraphicsBlurEffect(self)
+        self.setGraphicsEffect(self.blur_effect)
+        self.blur_effect.setBlurRadius(0)
+
+        self.blur_in_effect = QPropertyAnimation(self.blur_effect, b"blurRadius")
+        self.blur_in_effect.setDuration(250)
+        self.blur_in_effect.setStartValue(0)
+        self.blur_in_effect.setEndValue(20)
+        self.blur_in_effect.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.blur_out_effect = QPropertyAnimation(self.blur_effect, b"blurRadius")
+        self.blur_out_effect.setDuration(250)
+        self.blur_out_effect.setStartValue(20)
+        self.blur_out_effect.setEndValue(0)
+        self.blur_out_effect.setEasingCurve(QEasingCurve.Type.InCubic)
 
         self.download_failed = download_failed.DownloadFailed(parent=self)
 
@@ -129,6 +164,18 @@ class Body(QFrame):
         self.current_user = user
         self.current_user.logged_inChanged.connect(self._clear_layout)
 
+    def close_sticker_preview(self):
+        self.preview_open = False
+        self.blur_out_effect.start()
+        self.preview_sticker_widget.close_preview()
+
+    def preview_sticker(self, pos: QPoint, button: QPushButton, pack: str, sticker: str):
+        self.preview_open = True
+        self.blur_in_effect.start()
+        print(get_rel_pos(button, self.scroll_area, self))
+        print(os.path.join("stickers", pack, sticker))
+        self.preview_sticker_widget.show_preview()
+
     def copy_sticker(self, pack: str, sticker: str):
         clipboard.copy_image(os.path.join("stickers", pack, sticker))
         self.toast_provider.show_toast("Copied sticker to clipboard")
@@ -213,6 +260,9 @@ class Body(QFrame):
         if self.downloader.downloading:
             return
 
+        if self.preview_open:
+            self.close_sticker_preview()
+
         self.pack_not_downloaded.setVisible(False)
         self.current_pack = sticker_pack
         self._clear_layout()
@@ -266,6 +316,8 @@ class Body(QFrame):
             button.setIcon(self.icon_cache.get_icon(os.path.join(folder, file)))
             button.setIconSize(QSize(int(45 * self.scaleFactor), int(45 * self.scaleFactor)))
             button.clicked.connect(lambda checked=False, pack=sticker_pack, file=file: self.copy_sticker(pack, file))
+            button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            button.customContextMenuRequested.connect(lambda pos, button=button, pack=sticker_pack, file=file: self.preview_sticker(pos, button, pack, file))
             self.layout.addWidget(button, row, col)
 
             col += 1
@@ -291,5 +343,7 @@ class Body(QFrame):
         x = (self.width() - child.width()) // 2
         y = (self.height() - child.height())
         child.move(x, y)
+
+        self.preview_sticker_widget.resize(self.size())
 
         super().resizeEvent(event)
