@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("Storeß Desktop")
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -117,7 +118,6 @@ class MainWindow(QMainWindow):
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
-        asd
     def toggle_settings(self):
         if self.settings_widget.settings_open:
             self.settings_widget.settings_open = False
