@@ -1,15 +1,45 @@
+import os
+import sys
+import time
+import traceback
+
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
-from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
 from PySide6.QtCore import QEvent
 from widgets import title_bar, tray_menu, settings, sidebar, body, toast
 from widgets.popups import add_pack
+
+
+def format_exception(exctype, value, traceback_obj):
+
+    exception_str = '\n' + ''.join(traceback.format_exception(exctype, value, traceback_obj))
+
+    return exception_str
+
+def exception_hook(exctype, value, traceback_obj):
+    time_stamp = time.time()
+    time_stamp = time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time_stamp))
+    exception_str = format_exception(exctype, value, traceback_obj)
+    if not os.path.exists("reports"):
+        os.mkdir("reports")
+    with open(f"reports/{time_stamp}.txt", "w") as f:
+        f.write(exception_str)
+
+    QMessageBox.critical(None, "Error", f"<p>An unexpected error occurred<br>"
+                                        f"<pre>{str(exctype.__name__)}</pre><br>"
+                                        f"The application will quit. Please contact support.<br>"
+                                        f"A detailed error message has been saved here: <br>"
+                                        f"<pre><code>{os.path.abspath(f'reports/{time_stamp}.txt')}</code></pre></p>")
+
+    sys.__excepthook__(exctype, value, traceback_obj)
+    app.quit()
+
 
 
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
         self.setWindowTitle("Storeß Desktop")
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -87,7 +117,7 @@ class MainWindow(QMainWindow):
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
-
+        asd
     def toggle_settings(self):
         if self.settings_widget.settings_open:
             self.settings_widget.settings_open = False
@@ -127,5 +157,6 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication([])
+    sys.excepthook = exception_hook
     window = MainWindow()
     app.exec()
