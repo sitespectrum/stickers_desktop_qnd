@@ -295,7 +295,7 @@ class Body(QFrame):
             return
 
         max_value = 100
-        chunk_size = max_value // len(files)
+        chunk_size = max_value / len(files)
         current_value = 0
 
         button_size = int(50 * self.scaleFactor)
