@@ -10,7 +10,8 @@ from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar, QPushBu
 from caches.sticker_icon_cache import StickerIconCache
 from globals.constants import SERVER
 from globals.user import user
-from widgets import toast, sticker_preview
+from widgets import toast
+from widgets.sticker import sticker_preview
 from widgets.popups import pack_not_downloaded, download_failed
 from modules import download_pack, request_helpers, clipboard
 

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton, QLineEdi
 
 from globals.user import user
 from modules import ui_helpers
-from widgets import body, sidebar
+from widgets.sticker import sidebar, body
 
 
 class AddPack(QFrame):

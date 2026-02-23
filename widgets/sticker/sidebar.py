@@ -11,7 +11,7 @@ from globals.constants import SERVER
 from modules import request_helpers
 from modules.ui_helpers import svg_to_icon
 
-from widgets import body, sticker_pack_menu
+from widgets.sticker import body, sticker_pack_menu
 from widgets.popups import add_pack
 
 

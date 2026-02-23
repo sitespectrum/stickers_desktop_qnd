@@ -6,8 +6,9 @@ import traceback
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
 from PySide6.QtCore import QEvent
-from widgets import title_bar, tray_menu, settings, sidebar, body, toast
-from widgets.popups import add_pack
+from widgets import title_bar, tray_menu, toast
+from widgets.sticker import sidebar, body
+from widgets.popups import add_pack, settings
 
 
 def format_exception(exctype, value, traceback_obj):
