@@ -30,7 +30,6 @@ class AddPack(QFrame):
                     }
                     #add_pack {
                         background-color: #212121;
-                        border-top-left-radius: 10px;
                     }
                     #close_button {
                         border-radius: 5px;

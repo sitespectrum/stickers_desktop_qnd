@@ -11,11 +11,24 @@ class TitleBar(QFrame):
         self.scaleFactor = self.primary_screen.devicePixelRatio()
         self.setParent(None)
 
+        icon_px = int(round(20 * self.scaleFactor))
+        btn_px = int(round(20 * self.scaleFactor))
+
+        button_color = QColor("#E6E6E6")
+
         self.setObjectName("title_bar")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
+
+        self.menu_button = QPushButton("")
+        self.menu_button.setFixedSize(btn_px, btn_px)
+        self.menu_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.menu_button.setIcon(ui_helpers.svg_to_icon("utils/ui/menu.svg", QSize(icon_px, icon_px), button_color))
+        self.menu_button.setIconSize(QSize(int(icon_px - (5 * self.scaleFactor)), int(icon_px - (5 * self.scaleFactor))))
+        self.menu_button.setCheckable(True)
+        self.layout.addWidget(self.menu_button)
 
         self.label = QLabel("Storeß Desktop")
         self.label.setStyleSheet(f"color: #999; font-size: {10 * self.scaleFactor}px")
@@ -41,11 +54,6 @@ class TitleBar(QFrame):
                 background-color: #444;
             }
         """)
-
-        icon_px = int(round(20 * self.scaleFactor))
-        btn_px = int(round(20 * self.scaleFactor))
-
-        button_color = QColor("#E6E6E6")
 
         self.close_button = QPushButton("")
         self.close_button.setFixedSize(btn_px, btn_px)

@@ -4,9 +4,10 @@ import time
 import traceback
 
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
-from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
-from PySide6.QtCore import QEvent
-from widgets import title_bar, tray_menu, toast
+from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
+    QMessageBox, QStackedWidget, QLabel, QGraphicsBlurEffect, QGraphicsOpacityEffect
+from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
+from widgets import title_bar, tray_menu, toast, menu
 from widgets.sticker import sidebar, body
 from widgets.popups import add_pack, settings
 
@@ -78,7 +79,12 @@ class MainWindow(QMainWindow):
         self.title_bar.close_button.clicked.connect(self.close)
         self.title_bar.settings_button.clicked.connect(self.toggle_settings)
         self.title_bar.setFixedHeight(int(round(35 * self.scaleFactor)))
+        self.title_bar.menu_button.toggled.connect(self.toggle_menu)
         self.central_layout.addWidget(self.title_bar)
+
+        self.menu = menu.Menu(stacked_widget_trigger=self.stacked_widget_triggered, parent=self.central_widget)
+        self.menu.move(QPoint(0, self.title_bar.height()))
+        self.menu.setVisible(False)
 
         self.body = QWidget()
         self.central_layout.addWidget(self.body)
@@ -87,19 +93,49 @@ class MainWindow(QMainWindow):
         self.body_layout.setContentsMargins(0, 0, 0, 0)
         self.body.setLayout(self.body_layout)
 
-        self.main = body.Body(toast_provider=self.toast_provider, main_window=self)
+        self.stacked_widget = QStackedWidget()
+        self.body_layout.addWidget(self.stacked_widget)
 
-        self.add_pack_widget = add_pack.AddPack(parent=self.central_widget, body_widget=self.main)
-        self.add_pack_widget.move((self.width() - self.add_pack_widget.width()) // 2, (self.height() - self.add_pack_widget.height()) // 2)
+        # Stickers
+        self.stickers_frame = QWidget()
+        self.stickers_frame.setObjectName("stickers_frame")
+        self.stickers_layout = QHBoxLayout()
+        self.stickers_frame.setLayout(self.stickers_layout)
+        self.stickers_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.sidebar = sidebar.Sidebar(body_widget=self.main, add_pack_widget=self.add_pack_widget)
-        self.body_layout.addWidget(self.sidebar)
+        self.stickers_widget = body.Body(toast_provider=self.toast_provider, main_window=self)
 
-        self.add_pack_widget.sidebar_widget = self.sidebar
+        self.add_pack_widget = add_pack.AddPack(parent=self.stickers_frame, body_widget=self.stickers_widget)
 
-        self.main.sidebar = self.sidebar
+        self.stickers_sidebar = sidebar.Sidebar(body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
+        self.stickers_layout.addWidget(self.stickers_sidebar)
 
-        self.body_layout.addWidget(self.main)
+        self.add_pack_widget.sidebar_widget = self.stickers_sidebar
+
+        self.stickers_widget.sidebar = self.stickers_sidebar
+
+        self.stickers_layout.addWidget(self.stickers_widget)
+
+        self.stacked_widget.addWidget(self.stickers_frame)
+
+        # Notes
+        self.notes_frame = QWidget()
+        self.notes_frame.setObjectName("notes_frame")
+        self.notes_layout = QHBoxLayout()
+        self.notes_frame.setLayout(self.notes_layout)
+        self.notes_layout.addWidget(QLabel("Notes"))
+
+        self.stacked_widget.addWidget(self.notes_frame)
+
+        # Bookmarks
+        self.bookmarks_frame = QWidget()
+        self.bookmarks_frame.setObjectName("bookmarks_frame")
+        self.bookmarks_layout = QHBoxLayout()
+        self.bookmarks_frame.setLayout(self.bookmarks_layout)
+        self.bookmarks_layout.addWidget(QLabel("Bookmarks"))
+
+        self.stacked_widget.addWidget(self.bookmarks_frame)
+
         self.window_visible = False
 
         base_size = 10
@@ -116,9 +152,70 @@ class MainWindow(QMainWindow):
             QWidget {
                 color: #ccc;
             }
+             QPushButton {
+                background-color: #111;
+                border-radius: 5px;
+            }
+            QPushButton:disabled {
+                background-color: #444;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #333;
+            }
+            QPushButton:pressed {
+                background-color: #444;
+            }
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
+
+        self.overlay = QWidget(self.central_widget)
+        self.overlay.setGeometry(self.stacked_widget.rect())
+        self.overlay.move(0, self.title_bar.height())
+        self.overlay.setObjectName("overlay")
+        self.overlay.setStyleSheet("background-color: rgba(33, 33, 33, .9);")
+        self.overlay.hide()
+
+        # Add this block for opacity effect
+        self.opacity_effect = QGraphicsOpacityEffect(self.overlay)
+        self.opacity_effect.setOpacity(0)
+        self.overlay.setGraphicsEffect(self.opacity_effect)
+
+        self.fade_in_anim = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_in_anim.setDuration(250)
+        self.fade_in_anim.setStartValue(0)
+        self.fade_in_anim.setEndValue(1)
+        self.fade_in_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.fade_out_anim = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_out_anim.setDuration(250)
+        self.fade_out_anim.setStartValue(1)
+        self.fade_out_anim.setEndValue(0)
+        self.fade_out_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+        self.fade_out_anim.finished.connect(self.overlay.hide)
+
+    def stacked_widget_triggered(self, triggered):
+        widgets = {
+            "stickers": self.stickers_frame,
+            "notes": self.notes_frame,
+            "bookmarks": self.bookmarks_frame
+        }
+        self.stacked_widget.setCurrentWidget(widgets[triggered])
+        self.title_bar.menu_button.setChecked(False)
+
+    def toggle_menu(self, checked):
+        self.menu.raise_()
+        if checked:
+            if self.stickers_widget.preview_open:
+                self.stickers_widget.close_sticker_preview()
+            self.overlay.show()
+            self.fade_in_anim.start()
+        else:
+            self.fade_out_anim.start()
+
+        self.menu.setVisible(checked)
+
     def toggle_settings(self):
         if self.settings_widget.settings_open:
             self.settings_widget.settings_open = False
