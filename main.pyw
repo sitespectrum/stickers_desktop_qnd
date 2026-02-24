@@ -177,7 +177,6 @@ class MainWindow(QMainWindow):
         self.overlay.setStyleSheet("background-color: rgba(33, 33, 33, .9);")
         self.overlay.hide()
 
-        # Add this block for opacity effect
         self.opacity_effect = QGraphicsOpacityEffect(self.overlay)
         self.opacity_effect.setOpacity(0)
         self.overlay.setGraphicsEffect(self.opacity_effect)
@@ -195,6 +194,22 @@ class MainWindow(QMainWindow):
         self.fade_out_anim.setEasingCurve(QEasingCurve.Type.InCubic)
         self.fade_out_anim.finished.connect(self.overlay.hide)
 
+        self.blur = QGraphicsBlurEffect()
+        self.stickers_sidebar.setGraphicsEffect(self.blur)
+        self.blur.setBlurRadius(0)
+
+        self.blur_in_anim = QPropertyAnimation(self.blur, b"blurRadius")
+        self.blur_in_anim.setDuration(250)
+        self.blur_in_anim.setStartValue(0)
+        self.blur_in_anim.setEndValue(20)
+        self.blur_in_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.blur_out_anim = QPropertyAnimation(self.blur, b"blurRadius")
+        self.blur_out_anim.setDuration(250)
+        self.blur_out_anim.setStartValue(20)
+        self.blur_out_anim.setEndValue(0)
+        self.blur_out_anim.setEasingCurve(QEasingCurve.Type.InCubic)
+
     def stacked_widget_triggered(self, triggered):
         widgets = {
             "stickers": self.stickers_frame,
@@ -211,8 +226,12 @@ class MainWindow(QMainWindow):
                 self.stickers_widget.close_sticker_preview()
             self.overlay.show()
             self.fade_in_anim.start()
+            self.blur_in_anim.start()
+            self.stickers_widget.blur_in_effect.start()
         else:
+            self.blur_out_anim.start()
             self.fade_out_anim.start()
+            self.stickers_widget.blur_out_effect.start()
 
         self.menu.setVisible(checked)
 
