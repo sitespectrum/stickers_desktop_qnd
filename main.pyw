@@ -5,7 +5,7 @@ import traceback
 
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
-    QMessageBox, QStackedWidget, QLabel, QGraphicsBlurEffect, QGraphicsOpacityEffect
+    QMessageBox, QStackedWidget, QLabel, QGraphicsOpacityEffect
 from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
 from widgets import title_bar, tray_menu, toast, menu
 from widgets.sticker import sidebar, body
