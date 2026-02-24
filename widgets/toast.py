@@ -41,7 +41,7 @@ class Toast(QFrame):
                 "color": "#FF7B00",
             },
             "error": {
-                "icon": "octagon-alert.svg",
+                "icon": "circle-alert.svg",
                 "color": "#DE0000",
             },
             "success": {

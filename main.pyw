@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
 
         self.add_pack_widget = add_pack.AddPack(parent=self.stickers_frame, body_widget=self.stickers_widget)
 
-        self.stickers_sidebar = sidebar.Sidebar(body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
+        self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
         self.stickers_layout.addWidget(self.stickers_sidebar)
 
         self.add_pack_widget.sidebar_widget = self.stickers_sidebar
@@ -240,8 +240,13 @@ class MainWindow(QMainWindow):
         self.show()
 
     def closeEvent(self, event):
-        self.hide()
-        self.window_visible = False
+        if self.stickers_widget.preview_open:
+            self.stickers_widget.close_sticker_preview()
+        elif self.stickers_sidebar.add_pack_widget.isVisible():
+            self.stickers_sidebar.add_pack_widget.close_popup()
+        else:
+            self.hide()
+            self.window_visible = False
         event.ignore()
 
     # noinspection PyUnresolvedReferences

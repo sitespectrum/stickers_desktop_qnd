@@ -10,18 +10,21 @@ from globals.user import user
 from globals.constants import SERVER
 from modules import request_helpers
 from modules.ui_helpers import svg_to_icon
+from widgets import toast
 
 from widgets.sticker import body, sticker_pack_menu
 from widgets.popups import add_pack
 
 
 class Sidebar(QFrame):
-    def __init__(self, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
+    def __init__(self, toast_provider: toast.QToastProvider, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
+
+        self.toast_provider = toast_provider
 
         self.user_packs = []
 
@@ -101,12 +104,15 @@ class Sidebar(QFrame):
 
     def add_pack(self, pack_name: str = ""):
         if not pack_name:
+            if self.body.preview_open:
+                self.body.close_sticker_preview()
             self.add_pack_widget.open_popup()
             self.add_pack_widget.raise_()
             return
         r = request_helpers.make_request(f"{SERVER}/api/stickers/add_pack", "POST", json_data={"pack_name": pack_name})
         def on_req_finished():
             if r.error() != r.NetworkError.NoError:
+                self.toast_provider.show_toast("Failed to add pack", variant="error")
                 return
             self.get_sticker_packs()
 
@@ -118,6 +124,7 @@ class Sidebar(QFrame):
         r = request_helpers.make_request(f"{SERVER}/api/stickers/remove_pack/{pack_name}", "DELETE")
         def on_req_finished():
             if r.error() != r.NetworkError.NoError:
+                self.toast_provider.show_toast("Failed to remove pack", variant="error")
                 return
             self.get_sticker_packs()
 
