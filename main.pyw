@@ -27,7 +27,7 @@ def exception_hook(exctype, value, traceback_obj):
     with open(f"reports/{time_stamp}.txt", "w") as f:
         f.write(exception_str)
 
-    QMessageBox.critical(None, "Error", f"<p>An unexpected error occurred<br>"
+    QMessageBox.critical(None, "Storeß Desktop | Error", f"<p>An unexpected error occurred<br>"
                                         f"<pre>{str(exctype.__name__)}</pre><br>"
                                         f"The application will quit. Please contact support.<br>"
                                         f"A detailed error message has been saved here: <br>"
@@ -42,8 +42,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
         self.setWindowTitle("Storeß Desktop")
+        self.setWindowIcon(QIcon('utils/icon.png'))
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
