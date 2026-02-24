@@ -104,8 +104,6 @@ class Sidebar(QFrame):
 
     def add_pack(self, pack_name: str = ""):
         if not pack_name:
-            if self.body.preview_open:
-                self.body.close_sticker_preview()
             self.add_pack_widget.open_popup()
             self.add_pack_widget.raise_()
             return
@@ -114,6 +112,7 @@ class Sidebar(QFrame):
             if r.error() != r.NetworkError.NoError:
                 self.toast_provider.show_toast("Failed to add pack", variant="error")
                 return
+            self.toast_provider.show_toast("Pack added to your profile", variant="success")
             self.get_sticker_packs()
 
         r.finished.connect(on_req_finished)
@@ -126,6 +125,7 @@ class Sidebar(QFrame):
             if r.error() != r.NetworkError.NoError:
                 self.toast_provider.show_toast("Failed to remove pack", variant="error")
                 return
+            self.toast_provider.show_toast("Pack removed from your profile", variant="success")
             self.get_sticker_packs()
 
         r.finished.connect(on_req_finished)

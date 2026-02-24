@@ -45,7 +45,7 @@ class Body(QFrame):
         self.current_pack = ""
         self.pack_not_downloaded = pack_not_downloaded.PackNotDownloaded(parent=self)
 
-        self.progress_bar = QProgressBar(parent=self)
+        self.progress_bar = QProgressBar(parent=main_window)
         self.progress_bar.setVisible(False)
         self.progress_bar.setFixedSize(int(200 * self.scaleFactor), int(20 * self.scaleFactor))
         self.progress_bar.setRange(0, 100)
@@ -83,23 +83,6 @@ class Body(QFrame):
         self.setStyleSheet("""
             #body {
                 background-color: transparent;
-            }
-            QProgressBar {
-                padding: 3px;
-                background-color: #111;
-                border-top: 1px solid #333;
-                border-left: 1px solid #333;
-                border-right: 1px solid #333;
-                border-top-right-radius: 5px;
-                border-top-left-radius: 5px;
-                text-align: center;
-                color: transparent;
-                height: 30px;
-            }
-            QProgressBar::chunk {
-                background-color: #333;
-                border-radius: 2px;
-                margin: 0.5px;
             }
         """)
 
@@ -341,7 +324,7 @@ class Body(QFrame):
         child.move(x, y)
 
         child = self.progress_bar
-        x = (self.width() - child.width()) // 2
+        x = (self.width() - child.width()) // 2 + int(40 * self.scaleFactor)
         y = (self.height() - child.height())
         child.move(x, y)
 

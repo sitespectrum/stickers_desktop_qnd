@@ -103,9 +103,10 @@ class MainWindow(QMainWindow):
         self.stickers_frame.setLayout(self.stickers_layout)
         self.stickers_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.stickers_widget = body.Body(toast_provider=self.toast_provider, main_window=self)
+        self.stickers_widget = body.Body(toast_provider=self.toast_provider, main_window=self.stickers_frame)
 
-        self.add_pack_widget = add_pack.AddPack(parent=self.stickers_frame, body_widget=self.stickers_widget)
+        self.add_pack_widget = add_pack.AddPack(parent=self.stacked_widget, body_widget=self.stickers_widget)
+        self.add_pack_widget.resize(self.height() - self.title_bar.height(), self.width())
 
         self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
         self.stickers_layout.addWidget(self.stickers_sidebar)
@@ -166,6 +167,23 @@ class MainWindow(QMainWindow):
             QPushButton:pressed {
                 background-color: #444;
             }
+            QProgressBar {
+                padding: 3px;
+                background-color: #111;
+                border-top: 1px solid #333;
+                border-left: 1px solid #333;
+                border-right: 1px solid #333;
+                border-top-right-radius: 5px;
+                border-top-left-radius: 5px;
+                text-align: center;
+                color: transparent;
+                height: 30px;
+            }
+            QProgressBar::chunk {
+                background-color: #333;
+                border-radius: 2px;
+                margin: 0.5px;
+            }
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
@@ -196,6 +214,9 @@ class MainWindow(QMainWindow):
         self.fade_out_anim.finished.connect(self.overlay.hide)
 
     def stacked_widget_triggered(self, triggered):
+        if self.stickers_widget.preview_open:
+            self.stickers_widget.close_sticker_preview()
+        self.add_pack_widget.close_popup()
         widgets = {
             "stickers": self.stickers_frame,
             "notes": self.notes_frame,
@@ -207,8 +228,6 @@ class MainWindow(QMainWindow):
     def toggle_menu(self, checked):
         self.menu.raise_()
         if checked:
-            if self.stickers_widget.preview_open:
-                self.stickers_widget.close_sticker_preview()
             self.overlay.show()
             self.fade_in_anim.start()
         else:
@@ -240,10 +259,12 @@ class MainWindow(QMainWindow):
         self.show()
 
     def closeEvent(self, event):
-        if self.stickers_widget.preview_open:
-            self.stickers_widget.close_sticker_preview()
+        if self.title_bar.menu_button.isChecked():
+            self.title_bar.menu_button.toggle()
         elif self.stickers_sidebar.add_pack_widget.isVisible():
             self.stickers_sidebar.add_pack_widget.close_popup()
+        elif self.stickers_widget.preview_open:
+            self.stickers_widget.close_sticker_preview()
         else:
             self.hide()
             self.window_visible = False
