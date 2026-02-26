@@ -295,6 +295,7 @@ class Sidebar(QFrame):
             def on_finished():
                 try:
                     if reply.error() != reply.NetworkError.NoError:
+                        self.toast_provider.show_toast("Failed to fetch packs", variant="error")
                         return
                     data = bytes(reply.readAll())
                     payload = json.loads(data.decode("utf-8")) if data else {}
@@ -321,6 +322,7 @@ class Sidebar(QFrame):
                         thumbnail = glob.glob(f"./stickers/{pack['name']}/thumbnail.*")
                         if not thumbnail:
                             button.setToolTip(pack["title"])
+                            button.setIcon(svg_to_icon(os.path.join("utils", "ui", "ellipsis.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), QColor("#E6E6E6")))
                             self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
                         else:
                             button.setIcon(QIcon(thumbnail[0]))
