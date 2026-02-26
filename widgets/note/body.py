@@ -5,7 +5,7 @@ from json import JSONDecodeError
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
 from PySide6.QtGui import QGuiApplication, QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QScrollArea, QGraphicsBlurEffect, \
-    QGraphicsOpacityEffect, QWidget
+    QGraphicsOpacityEffect, QWidget, QHBoxLayout
 
 from globals.constants import SERVER
 from modules import request_helpers
@@ -57,19 +57,35 @@ class Body(QFrame):
         self.edit_note.delete_button.clicked.connect(self.delete_note)
 
         self.scroll_layout = QVBoxLayout(self.scroll_area)
-        self.scroll_layout.setContentsMargins(0, 0, int(5 * self.scaleFactor), int(30 * self.scaleFactor))
+        self.scroll_layout.setContentsMargins(0, 0, int(5 * self.scaleFactor), int(40 * self.scaleFactor))
         self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.scroll_widget = QWidget()
         self.scroll_widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.scroll_widget)
         self.layout.addWidget(self.scroll_area)
 
+        self.bottom_bar = QWidget(parent=self)
+        self.bottom_bar.setObjectName("bottom_bar")
+        self.bottom_bar.setFixedHeight(int(32 * self.scaleFactor))
+        self.bottom_bar.setStyleSheet("#bottom_bar {border-radius: 5px; background-color: #191919; border: 1px solid #333;}")
+        self.bottom_layout = QHBoxLayout(self.bottom_bar)
+        self.bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         self.add_note_button = QPushButton("Add Note")
         self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
         self.add_note_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.add_note_button.setParent(self)
         self.add_note_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
         self.add_note_button.clicked.connect(self.add_note)
+        self.bottom_layout.addWidget(self.add_note_button)
+
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
+        self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.refresh_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.refresh_button.clicked.connect(self.get_notes)
+        self.bottom_layout.addWidget(self.refresh_button)
+
+        self.bottom_bar.setFixedWidth(self.bottom_layout.sizeHint().width())
 
         self.scroll_area.setStyleSheet("""
             QScrollBar:vertical {
@@ -177,7 +193,6 @@ class Body(QFrame):
         self.fade_in_anim.start()
         self.overlay.show()
         self.overlay.raise_()
-        self.get_notes()
         self.edit_note.show()
         self.edit_note.raise_()
 
@@ -302,4 +317,4 @@ class Body(QFrame):
     def resizeEvent(self, event):
         self.align_to_center(self.edit_note)
 
-        self.add_note_button.move(int(10 * self.scaleFactor), self.height() - self.add_note_button.height() - int(10 * self.scaleFactor))
+        self.bottom_bar.move(int(10 * self.scaleFactor), self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))
