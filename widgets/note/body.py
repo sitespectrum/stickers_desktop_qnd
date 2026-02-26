@@ -151,7 +151,7 @@ class Body(QFrame):
         self.overlay = QWidget(self)
         self.overlay.setFixedSize(self.size())
         self.overlay.setObjectName("overlay")
-        self.overlay.setStyleSheet("background-color: rgba(33, 33, 33, .9);")
+        self.overlay.setStyleSheet("background-color: rgba(33, 33, 33, .5);")
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.overlay.setGraphicsEffect(self.opacity_effect)
