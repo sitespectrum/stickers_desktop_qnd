@@ -56,20 +56,6 @@ class AddPack(QFrame):
                     QPushButton:pressed {
                         background-color: #444;
                     }
-                    QLineEdit {
-                        background-color: transparent;
-                        border: 1px solid #444;
-                        border-top: none;
-                        border-left: none;
-                        border-radius: 3px;
-                        color: #999999;
-                        height: 30px;
-                        padding-left: 1px;
-                    }
-                    QLineEdit:focus {
-                        border: 1px solid #555;
-                        padding-left: 0;
-                    }
                 """)
 
         self.setVisible(False)

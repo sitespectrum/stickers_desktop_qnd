@@ -13,7 +13,7 @@ from modules.ui_helpers import svg_to_icon
 from widgets import toast
 
 from widgets.sticker import body, sticker_pack_menu
-from widgets.popups import add_pack
+from widgets.sticker.popups import add_pack
 
 
 class Sidebar(QFrame):

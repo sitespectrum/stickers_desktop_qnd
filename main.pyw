@@ -9,7 +9,9 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidge
 from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
 from widgets import title_bar, tray_menu, toast, menu
 from widgets.sticker import sidebar, body
-from widgets.popups import add_pack, settings
+from widgets.popups import settings
+from widgets.sticker.popups import add_pack
+from widgets.note import body as note_body, edit_note
 
 
 def format_exception(exctype, value, traceback_obj):
@@ -65,7 +67,7 @@ class MainWindow(QMainWindow):
 
         self.tray_menu = tray_menu.TrayMenu()
         self.tray_icon.setContextMenu(self.tray_menu)
-        self.tray_menu.quit_action.triggered.connect(QApplication.quit)
+        self.tray_menu.quit_action.triggered.connect(sys.exit)
 
         self.central_widget = QWidget(self)
         self.central_widget.setObjectName("central_widget")
@@ -123,8 +125,13 @@ class MainWindow(QMainWindow):
         self.notes_frame = QWidget()
         self.notes_frame.setObjectName("notes_frame")
         self.notes_layout = QHBoxLayout()
+        self.notes_layout.setContentsMargins(0, 0, 0, 0)
         self.notes_frame.setLayout(self.notes_layout)
-        self.notes_layout.addWidget(QLabel("Notes"))
+
+        self.edit_note_widget = edit_note.EditNote(parent=self.stacked_widget)
+        self.notes_widget = note_body.Body(self.edit_note_widget, self.toast_provider)
+
+        self.notes_layout.addWidget(self.notes_widget)
 
         self.stacked_widget.addWidget(self.notes_frame)
 
@@ -184,6 +191,32 @@ class MainWindow(QMainWindow):
                 border-radius: 2px;
                 margin: 0.5px;
             }
+            QLineEdit {
+                background-color: transparent;
+                border: 1px solid #444;
+                border-top-color: transparent;
+                border-left-color: transparent;
+                border-radius: 3px;
+                color: #999999;
+                height: 30px;
+                padding-left: 1px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #444;
+            }
+            QTextEdit {
+                background-color: transparent;
+                border: 1px solid #444;
+                border-top-color: transparent;
+                border-left-color: transparent;
+                border-radius: 3px;
+                color: #999999;
+                height: 30px;
+                padding-left: 1px;
+            }
+            QTextEdit:focus {
+                border-color: #444;
+            }
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
@@ -216,6 +249,8 @@ class MainWindow(QMainWindow):
     def stacked_widget_triggered(self, triggered):
         if self.stickers_widget.preview_open:
             self.stickers_widget.close_sticker_preview()
+        if self.notes_widget.note_open:
+            self.notes_widget.close_note()
         self.add_pack_widget.close_popup()
         widgets = {
             "stickers": self.stickers_frame,
@@ -259,7 +294,10 @@ class MainWindow(QMainWindow):
         self.show()
 
     def closeEvent(self, event):
-        if self.title_bar.menu_button.isChecked():
+        if self.notes_widget.note_open:
+            self.notes_widget.close_note()
+
+        elif self.title_bar.menu_button.isChecked():
             self.title_bar.menu_button.toggle()
         elif self.stickers_sidebar.add_pack_widget.isVisible():
             self.stickers_sidebar.add_pack_widget.close_popup()

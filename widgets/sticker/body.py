@@ -12,7 +12,7 @@ from globals.constants import SERVER
 from globals.user import user
 from widgets import toast
 from widgets.sticker import sticker_preview
-from widgets.popups import pack_not_downloaded, download_failed
+from widgets.sticker.popups import download_failed, pack_not_downloaded
 from modules import download_pack, request_helpers, clipboard
 
 
