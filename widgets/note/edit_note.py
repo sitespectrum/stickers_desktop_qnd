@@ -37,19 +37,55 @@ class EditNote(QFrame):
         QPushButton:pressed {{
             background-color: #444;
         }}
+        QScrollBar:vertical {{
+            width: 3px;
+            background: transparent;
+        }}
+
+        QScrollBar::handle:vertical {{
+            background: #333;
+            border-radius: 2px;
+        }}
+
+        QScrollBar::handle:vertical:hover {{
+            background: #444;
+        }}
+
+        QScrollBar::add-page:vertical,
+        QScrollBar::sub-page:vertical {{
+            background: transparent;
+        }}
+
+        QScrollBar::add-line:vertical,
+        QScrollBar::sub-line:vertical {{
+            height: 0px;
+        }}
+
+        QScrollArea {{
+            background: transparent;
+            border: none;
+        }}
+        
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+            background: #000;
+            border-radius: 2px;
+        }}
+        QScrollArea QWidget {{
+            background-color: transparent;
+        }}
         """)
 
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.title_label = QLabel("Title:")
+        self.title_label = QLabel("<b>Title:</b>")
         self.main_layout.addWidget(self.title_label)
 
         self.title = QLineEdit()
         self.main_layout.addWidget(self.title)
 
-        self.content_label = QLabel("Content:")
+        self.content_label = QLabel("<b>Content:</b>")
         self.main_layout.addWidget(self.content_label)
 
         self.content = QTextEdit()
