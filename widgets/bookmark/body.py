@@ -1,5 +1,6 @@
 import json
 import os
+import webbrowser
 from json import JSONDecodeError
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
@@ -13,7 +14,7 @@ from modules import request_helpers
 from globals.user import user
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
-from widgets.note import edit_note
+from widgets.bookmark import edit_bookmark
 
 
 def _clear_layout(layout=None):
@@ -28,13 +29,13 @@ def _clear_layout(layout=None):
 
 
 class Body(QFrame):
-    def __init__(self, edit_note_widget: edit_note.EditNote, toast_provider: toast.QToastProvider, parent=None):
+    def __init__(self, edit_bookmark_widget: edit_bookmark.EditBookmark, toast_provider: toast.QToastProvider, parent=None):
         super().__init__(parent)
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.current_user = user
-        self.current_user.logged_inChanged.connect(self.get_notes)
+        self.current_user.logged_inChanged.connect(self.get_bookmarks)
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
@@ -49,12 +50,11 @@ class Body(QFrame):
 
         self.toast_provider = toast_provider
 
-        self.note_open = False
-
-        self.edit_note = edit_note_widget
-        self.edit_note.close_button.clicked.connect(self.close_note)
-        self.edit_note.save_button.clicked.connect(self.save_note)
-        self.edit_note.delete_button.clicked.connect(self.delete_note)
+        self.bookmark_open = False
+        self.edit_bookmark = edit_bookmark_widget
+        self.edit_bookmark.close_button.clicked.connect(self.close_bookmark)
+        self.edit_bookmark.save_button.clicked.connect(self.save_bookmark)
+        self.edit_bookmark.delete_button.clicked.connect(self.delete_bookmark)
 
         self.scroll_layout = QVBoxLayout(self.scroll_area)
         self.scroll_layout.setContentsMargins(0, 0, int(5 * self.scaleFactor), int(40 * self.scaleFactor))
@@ -67,22 +67,28 @@ class Body(QFrame):
         self.bottom_bar = QWidget(parent=self)
         self.bottom_bar.setObjectName("bottom_bar")
         self.bottom_bar.setFixedHeight(int(32 * self.scaleFactor))
-        self.bottom_bar.setStyleSheet("#bottom_bar {border-radius: 5px; background-color: #191919; border: 1px solid #333;}")
+        self.bottom_bar.setStyleSheet(
+            "#bottom_bar {border-radius: 5px; background-color: #191919; border: 1px solid #333;}")
         self.bottom_layout = QHBoxLayout(self.bottom_bar)
         self.bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.add_note_button = QPushButton("Add Note")
-        self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
-        self.add_note_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.add_note_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
-        self.add_note_button.clicked.connect(self.add_note)
-        self.bottom_layout.addWidget(self.add_note_button)
+        self.add_bookmark_button = QPushButton("Add Bookmark")
+        self.add_bookmark_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"),
+                                                     QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)),
+                                                     QColor("#999")))
+        self.add_bookmark_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_bookmark_button.clicked.connect(self.add_bookmark)
+        self.add_bookmark_button.setFixedSize(int(80 * self.scaleFactor), int(20 * self.scaleFactor))
+
+        self.bottom_layout.addWidget(self.add_bookmark_button)
 
         self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
+        self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"),
+                                                QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)),
+                                                QColor("#999")))
         self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.refresh_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
-        self.refresh_button.clicked.connect(self.get_notes)
+        self.refresh_button.clicked.connect(self.get_bookmarks)
         self.bottom_layout.addWidget(self.refresh_button)
 
         self.bottom_bar.setFixedWidth(self.bottom_layout.sizeHint().width())
@@ -92,31 +98,31 @@ class Body(QFrame):
                 width: 5px;
                 background: transparent;
             }
-    
+
             QScrollBar::handle:vertical {
                 background: #333;
                 border-radius: 2px;
             }
-    
+
             QScrollBar::handle:vertical:hover {
                 background: #444;
             }
-    
+
             QScrollBar::add-page:vertical,
             QScrollBar::sub-page:vertical {
                 background: transparent;
             }
-    
+
             QScrollBar::add-line:vertical,
             QScrollBar::sub-line:vertical {
                 height: 0px;
             }
-    
+
             QScrollArea {
                 background: transparent;
                 border: none;
             }
-            
+
             QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
                 background: #000;
                 border-radius: 2px;
@@ -171,42 +177,46 @@ class Body(QFrame):
         self.fade_out_anim.setEasingCurve(QEasingCurve.Type.InCubic)
         self.fade_out_anim.finished.connect(self.overlay.hide)
 
-    def add_note(self):
-        self.open_note()
-        self.edit_note.delete_button.hide()
-        self.edit_note.title.setText("")
-        self.edit_note.content.setPlainText("")
-        self.edit_note.note_id = 0
+    def add_bookmark(self):
+        self.open_bookmark()
+        self.edit_bookmark.delete_button.hide()
+        self.edit_bookmark.title.setText("")
+        self.edit_bookmark.url.setText("")
+        self.edit_bookmark.bookmark_id = 0
 
-    def close_note(self):
-        self.note_open = False
+    def close_bookmark(self):
+        self.bookmark_open = False
         self.blur_out_effect.start()
         self.fade_out_anim.start()
-        self.edit_note.hide()
+        self.edit_bookmark.hide()
 
-    def open_note(self):
-        self.edit_note.end_loading()
-        self.edit_note.delete_button.show()
-        self.note_open = True
+    def open_bookmark(self):
+        self.edit_bookmark.end_loading()
+        self.edit_bookmark.delete_button.show()
+        self.bookmark_open = True
         self.blur_in_effect.start()
         self.overlay.show()
         self.fade_in_anim.start()
         self.overlay.show()
         self.overlay.raise_()
-        self.edit_note.show()
-        self.edit_note.raise_()
+        self.edit_bookmark.show()
+        self.edit_bookmark.raise_()
 
-    def delete_note(self):
-        if self.edit_note.note_id is None:
+    def open_bookmark_url(self, url):
+        if not webbrowser.open(url, new=2, autoraise=True):
+            self.toast_provider.show_toast("Failed to open browser.", variant="error")
+
+    def delete_bookmark(self):
+        if self.edit_bookmark.bookmark_id is None:
             return
-        self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/delete/{self.edit_note.note_id}", "DELETE")
+        self.edit_bookmark.loading()
+        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}", "DELETE")
         def req_finished():
-            self.edit_note.end_loading()
+            self.edit_bookmark.end_loading()
             if r.error() == r.NetworkError.NoError:
-                self.close_note()
-                self.toast_provider.show_toast("Note deleted successfully.", variant="success")
-                self.get_notes()
+                self.close_bookmark()
+                self.toast_provider.show_toast("Bookmark deleted successfully.", variant="success")
+                self.get_bookmarks()
             else:
                 try:
                     data = bytes(r.readAll())
@@ -216,26 +226,26 @@ class Body(QFrame):
                         self.toast_provider.show_toast(error, variant="error")
                         return
                 except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to delete note.", variant="error")
+                    self.toast_provider.show_toast("Failed to delete bookmark.", variant="error")
         r.finished.connect(req_finished)
 
-    def save_note(self):
-        if self.edit_note.note_id is None:
+    def save_bookmark(self):
+        if self.edit_bookmark.bookmark_id is None:
             return
-        elif not self.edit_note.content.toPlainText():
-            self.toast_provider.show_toast("Note content cannot be empty.", variant="warning")
+        elif not self.edit_bookmark.url.text().strip():
+            self.toast_provider.show_toast("Bookmark URL cannot be empty.", variant="warning")
             return
-        self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/save/{self.edit_note.note_id}", "POST", json_data={
-            "name": self.edit_note.title.text(),
-            "content": self.edit_note.content.toPlainText()
+        self.edit_bookmark.loading()
+        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "POST", json_data={
+            "name": self.edit_bookmark.title.text(),
+            "url": self.edit_bookmark.url.text().strip()
         })
         def req_finished():
-            self.edit_note.end_loading()
+            self.edit_bookmark.end_loading()
             if r.error() == r.NetworkError.NoError:
-                self.close_note()
-                self.get_notes()
-                self.toast_provider.show_toast("Note saved successfully.", variant="success")
+                self.close_bookmark()
+                self.get_bookmarks()
+                self.toast_provider.show_toast("Bookmark saved successfully.", variant="success")
             else:
                 try:
                     data = bytes(r.readAll())
@@ -245,41 +255,43 @@ class Body(QFrame):
                         self.toast_provider.show_toast(error, variant="error")
                         return
                 except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to save note.", variant="error")
+                    self.toast_provider.show_toast("Failed to save bookmark.", variant="error")
             r.deleteLater()
         r.finished.connect(req_finished)
 
-    def get_note_details(self, note_id: str):
-        self.open_note()
-        self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/get/{note_id}")
+    def get_bookmark_details(self, bookmark_id: str):
+        self.open_bookmark()
+        self.edit_bookmark.bookmark_id = bookmark_id
+        self.edit_bookmark.loading()
+        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/get/{bookmark_id}")
         def req_finished():
             if r.error() == r.NetworkError.NoError:
-                note = json.loads(bytes(r.readAll()))["note"]
-                self.edit_note.title.setText(note["name"])
-                self.edit_note.content.setPlainText(note["content"])
-                self.edit_note.note_id = note_id
-                self.edit_note.end_loading()
+                bookmark = json.loads(bytes(r.readAll()))["bookmark"]
+                self.edit_bookmark.title.setText(bookmark["name"])
+                self.edit_bookmark.url.setText(bookmark["url"])
+                self.edit_bookmark.note_id = bookmark_id
+                self.edit_bookmark.end_loading()
             r.deleteLater()
         r.finished.connect(req_finished)
 
-    def get_notes(self):
+    def get_bookmarks(self):
         _clear_layout(self.scroll_layout)
         if self.current_user.logged_in:
             label = QLabel("Fetching notes...")
             label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
             self.scroll_layout.addWidget(label)
-            r = request_helpers.make_request(f"{SERVER}/api/notes/all")
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/all")
+
             def req_finished():
                 _clear_layout(self.scroll_layout)
                 if r.error() == r.NetworkError.NoError:
-                    notes = json.loads(bytes(r.readAll()))
-                    if not notes["notes"]:
-                        label = QLabel("No notes")
+                    bookmarks = json.loads(bytes(r.readAll()))
+                    if not bookmarks["bookmarks"]:
+                        label = QLabel("No bookmarks")
                         label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
                         self.scroll_layout.addWidget(label)
                         return
-                    for i in notes["notes"]:
+                    for i in bookmarks["bookmarks"]:
                         button = QPushButton(i["name"].replace("\n", " "))
                         button.setCursor(Qt.CursorShape.PointingHandCursor)
                         button.setStyleSheet(f"""
@@ -300,21 +312,25 @@ class Body(QFrame):
                             }}
                         """)
                         self.scroll_layout.addWidget(button)
-                        button.clicked.connect(lambda checked=False, note_id=i["id"]: self.get_note_details(note_id))
+                        button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                        button.customContextMenuRequested.connect(lambda checked=False, bookmark_id=i["id"]: self.get_bookmark_details(bookmark_id))
+                        button.clicked.connect(lambda checked=False, bookmark_url=i["url"]: self.open_bookmark_url(bookmark_url))
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             label = QLabel("You are not logged in.")
             label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
             self.scroll_layout.addWidget(label)
 
-    def align_to_center(self, child=None,):
+    def align_to_center(self, child=None, ):
         child = child
         x = (self.width() - child.width()) // 2
         y = (self.height() - child.height()) // 2
         child.move(x, y)
 
     def resizeEvent(self, event):
-        self.align_to_center(self.edit_note)
+        self.align_to_center(self.edit_bookmark)
 
-        self.bottom_bar.move(int(10 * self.scaleFactor), self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))
+        self.bottom_bar.move(int(10 * self.scaleFactor),
+                             self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))

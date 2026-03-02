@@ -5,9 +5,10 @@ import traceback
 
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
-    QMessageBox, QStackedWidget, QLabel, QGraphicsOpacityEffect
+    QMessageBox, QStackedWidget, QGraphicsOpacityEffect
 from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
 from widgets import title_bar, tray_menu, toast, menu
+from widgets.bookmark import body as bookmark_body, edit_bookmark
 from widgets.sticker import sidebar, body
 from widgets.popups import settings
 from widgets.sticker.popups import add_pack
@@ -139,8 +140,13 @@ class MainWindow(QMainWindow):
         self.bookmarks_frame = QWidget()
         self.bookmarks_frame.setObjectName("bookmarks_frame")
         self.bookmarks_layout = QHBoxLayout()
+        self.bookmarks_layout.setContentsMargins(0, 0, 0, 0)
         self.bookmarks_frame.setLayout(self.bookmarks_layout)
-        self.bookmarks_layout.addWidget(QLabel("Bookmarks"))
+
+        self.edit_bookmark_widget = edit_bookmark.EditBookmark(parent=self.stacked_widget)
+        self.bookmarks_widget = bookmark_body.Body(self.edit_bookmark_widget, self.toast_provider)
+
+        self.bookmarks_layout.addWidget(self.bookmarks_widget)
 
         self.stacked_widget.addWidget(self.bookmarks_frame)
 
