@@ -183,8 +183,8 @@ class Body(QFrame):
     def on_download_fail(self, failed):
         if not failed:
             return
-        if os.path.exists(os.path.join(os.getcwd(), "stickers", self.current_pack)):
-            os.rmdir(os.path.join(os.getcwd(), "stickers", self.current_pack))
+        if os.path.exists(os.path.join("stickers", self.current_pack)):
+            os.rmdir(os.path.join("stickers", self.current_pack))
             self.load_stickers(self.current_pack)
             self.download_failed.show()
             self.download_failed.description.setText(failed)
@@ -194,15 +194,15 @@ class Body(QFrame):
         if self.downloader.downloading:
             self.toast_provider.show_toast("Another pack is already downloading", variant="warning", timeout=1500)
             return
-        if not os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
-            if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
-                os.mkdir(os.path.join(os.getcwd(), "stickers"))
+        if not os.path.exists(os.path.join("stickers", pack)):
+            if not os.path.exists(os.path.join("stickers")):
+                os.mkdir(os.path.join("stickers"))
 
             r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true")
-            os.mkdir(os.path.join(os.getcwd(), "stickers", pack))
+            os.mkdir(os.path.join("stickers", pack))
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:
-                    shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
+                    shutil.rmtree(os.path.join("stickers", pack))
                 if r.error() == r.NetworkError.ContentNotFoundError:
                     self.toast_provider.show_toast("Pack not found", variant="error")
                     return
@@ -210,7 +210,7 @@ class Body(QFrame):
                     close_popup()
                 data = bytes(r.readAll())
                 payload = json.loads(data.decode("utf-8")) if data else {}
-                with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "w") as f:
+                with open(os.path.join("stickers", pack, "info.json"), "w") as f:
                     f.write(json.dumps(payload, indent=4))
             r.finished.connect(create_sticker_into)
             self.downloader.pack_downloaded.disconnect()
@@ -225,10 +225,10 @@ class Body(QFrame):
             self.load_stickers(pack)
 
     def delete_pack(self, pack: str):
-        with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "r") as f:
+        with open(os.path.join("stickers", pack, "info.json"), "r") as f:
             payload = json.loads(f.read())
             pack_title = payload["title"]
-        shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
+        shutil.rmtree(os.path.join("stickers", pack))
         self.toast_provider.show_toast(f"Deleted local files for pack {pack_title}")
         if pack == self.current_pack:
             self.load_stickers(pack)
@@ -237,7 +237,7 @@ class Body(QFrame):
             self.sidebar.get_sticker_packs()
 
     def redownload_pack(self, pack: str):
-        shutil.rmtree(os.path.join(os.getcwd(), "stickers", pack))
+        shutil.rmtree(os.path.join("stickers", pack))
         self.download_pack(pack, no_switch=True)
 
     def load_stickers(self, sticker_pack: str):

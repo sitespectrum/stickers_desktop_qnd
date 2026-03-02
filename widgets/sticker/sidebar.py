@@ -181,7 +181,7 @@ class Sidebar(QFrame):
         global_pos = button.mapToGlobal(QPoint(0, button.height()))
         self.pack_context_menu.move(global_pos)
 
-        if os.path.exists(os.path.join(os.getcwd(), "stickers", pack)):
+        if os.path.exists(os.path.join("stickers", pack)):
             self.pack_context_menu.download.setVisible(False)
         else:
             self.pack_context_menu.redownload.setVisible(False)
@@ -248,7 +248,7 @@ class Sidebar(QFrame):
 
         def load_local_packs(packs):
             for pack in packs:
-                with open(os.path.join(os.getcwd(), "stickers", pack, "info.json"), "r") as f:
+                with open(os.path.join("stickers", pack, "info.json"), "r") as f:
                     info = json.loads(f.read())
                 button = QPushButton("")
                 button.setFixedSize(int(35 * self.scaleFactor), int(35 * self.scaleFactor))
@@ -281,10 +281,10 @@ class Sidebar(QFrame):
 
         if not self.current_user.logged_in:
             packs = []
-            if not os.path.exists(os.path.join(os.getcwd(), "stickers")):
+            if not os.path.exists(os.path.join("stickers")):
                 pass
             else:
-                packs = os.listdir(os.path.join(os.getcwd(), "stickers"))
+                packs = os.listdir(os.path.join("stickers"))
                 load_local_packs(packs)
             self.add_manage_buttons()
 
@@ -326,7 +326,7 @@ class Sidebar(QFrame):
                             self._fetch_thumbnail_into_button(str(pack.get("thumbnail_id", "")), button)
                         else:
                             button.setIcon(QIcon(thumbnail[0]))
-                            with open(os.path.join(os.getcwd(), "stickers", pack["name"], "info.json"), "r") as f:
+                            with open(os.path.join("stickers", pack["name"], "info.json"), "r") as f:
                                 info = json.loads(f.read())
                             button.setToolTip(info["title"])
                         button.setIconSize(QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)))
