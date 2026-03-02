@@ -5,7 +5,7 @@ import traceback
 
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
-    QMessageBox, QStackedWidget, QGraphicsOpacityEffect
+    QMessageBox, QStackedWidget, QGraphicsOpacityEffect, QLabel
 from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
 from widgets import title_bar, tray_menu, toast, menu
 from widgets.bookmark import body as bookmark_body, edit_bookmark
@@ -125,7 +125,10 @@ class MainWindow(QMainWindow):
         # Notes
         self.notes_frame = QWidget()
         self.notes_frame.setObjectName("notes_frame")
-        self.notes_layout = QHBoxLayout()
+        self.notes_layout = QVBoxLayout()
+        notes_title = QLabel("Notes")
+        notes_title.setStyleSheet(f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
+        self.notes_layout.addWidget(notes_title)
         self.notes_layout.setContentsMargins(0, 0, 0, 0)
         self.notes_frame.setLayout(self.notes_layout)
 
@@ -139,7 +142,10 @@ class MainWindow(QMainWindow):
         # Bookmarks
         self.bookmarks_frame = QWidget()
         self.bookmarks_frame.setObjectName("bookmarks_frame")
-        self.bookmarks_layout = QHBoxLayout()
+        self.bookmarks_layout = QVBoxLayout()
+        bookmarks_title = QLabel("Bookmarks")
+        bookmarks_title.setStyleSheet(f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
+        self.bookmarks_layout.addWidget(bookmarks_title)
         self.bookmarks_layout.setContentsMargins(0, 0, 0, 0)
         self.bookmarks_frame.setLayout(self.bookmarks_layout)
 
