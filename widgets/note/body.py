@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from json import JSONDecodeError
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
@@ -200,24 +201,36 @@ class Body(QFrame):
         if self.edit_note.note_id is None:
             return
         self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/delete/{self.edit_note.note_id}", "DELETE")
-        def req_finished():
-            self.edit_note.end_loading()
-            if r.error() == r.NetworkError.NoError:
-                self.close_note()
-                self.toast_provider.show_toast("Note deleted successfully.", variant="success")
-                self.get_notes()
-            else:
-                try:
-                    data = bytes(r.readAll())
-                    body = json.loads(data.decode("utf-8")) if data else {}
-                    error = body.get("error", "")
-                    if error:
-                        self.toast_provider.show_toast(error, variant="error")
-                        return
-                except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to delete note.", variant="error")
-        r.finished.connect(req_finished)
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/notes/delete/{self.edit_note.note_id}", "DELETE")
+            def req_finished():
+                self.edit_note.end_loading()
+                if r.error() == r.NetworkError.NoError:
+                    self.close_note()
+                    self.toast_provider.show_toast("Note deleted successfully.", variant="success")
+                    self.get_notes()
+                else:
+                    try:
+                        data = bytes(r.readAll())
+                        body = json.loads(data.decode("utf-8")) if data else {}
+                        error = body.get("error", "")
+                        if error:
+                            self.toast_provider.show_toast(error, variant="error")
+                            return
+                    except JSONDecodeError:
+                        self.toast_provider.show_toast("Failed to delete note.", variant="error")
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "notes.json")):
+                self.toast_provider.show_toast("Notes file not found", variant="error")
+            with open(os.path.join("data", "notes.json"), "r") as f:
+                notes = json.loads(f.read())
+            notes.pop(self.edit_note.note_id, None)
+            with open(os.path.join("data", "notes.json"), "w") as f:
+                f.write(json.dumps(notes, indent=4))
+            self.close_note()
+            self.toast_provider.show_toast("Note deleted successfully.", variant="success")
+            self.get_notes()
 
     def save_note(self):
         if self.edit_note.note_id is None:
@@ -226,42 +239,79 @@ class Body(QFrame):
             self.toast_provider.show_toast("Note content cannot be empty.", variant="warning")
             return
         self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/save/{self.edit_note.note_id}", "POST", json_data={
-            "name": self.edit_note.title.text(),
-            "content": self.edit_note.content.toPlainText()
-        })
-        def req_finished():
-            self.edit_note.end_loading()
-            if r.error() == r.NetworkError.NoError:
-                self.close_note()
-                self.get_notes()
-                self.toast_provider.show_toast("Note saved successfully.", variant="success")
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/notes/save/{self.edit_note.note_id}", "POST", json_data={
+                "name": self.edit_note.title.text(),
+                "content": self.edit_note.content.toPlainText()
+            })
+            def req_finished():
+                self.edit_note.end_loading()
+                if r.error() == r.NetworkError.NoError:
+                    self.close_note()
+                    self.get_notes()
+                    self.toast_provider.show_toast("Note saved successfully.", variant="success")
+                else:
+                    try:
+                        data = bytes(r.readAll())
+                        body = json.loads(data.decode("utf-8")) if data else {}
+                        error = body.get("error", "")
+                        if error:
+                            self.toast_provider.show_toast(error, variant="error")
+                            return
+                    except JSONDecodeError:
+                        self.toast_provider.show_toast("Failed to save note.", variant="error")
+                r.deleteLater()
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "notes.json")):
+                self.toast_provider.show_toast("Notes file not found", variant="error")
+            with open(os.path.join("data", "notes.json"), "r") as f:
+                notes = json.loads(f.read())
+            if self.edit_note.note_id == 0:
+                notes[str(uuid.uuid4())] = {
+                    "name": self.edit_note.title.text(),
+                    "content": self.edit_note.content.toPlainText()
+                }
             else:
-                try:
-                    data = bytes(r.readAll())
-                    body = json.loads(data.decode("utf-8")) if data else {}
-                    error = body.get("error", "")
-                    if error:
-                        self.toast_provider.show_toast(error, variant="error")
-                        return
-                except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to save note.", variant="error")
-            r.deleteLater()
-        r.finished.connect(req_finished)
+                note = notes.get(self.edit_note.note_id, None)
+                if not note:
+                    self.toast_provider.show_toast("Note not found", variant="error")
+                    return
+                note["name"] = self.edit_note.title.text()
+                note["content"] = self.edit_note.content.toPlainText()
+            with open(os.path.join("data", "notes.json"), "w") as f:
+                f.write(json.dumps(notes, indent=4))
+            self.close_note()
+            self.toast_provider.show_toast("Note saved successfully.", variant="success")
+            self.get_notes()
 
     def get_note_details(self, note_id: str):
         self.open_note()
         self.edit_note.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/notes/get/{note_id}")
-        def req_finished():
-            if r.error() == r.NetworkError.NoError:
-                note = json.loads(bytes(r.readAll()))["note"]
-                self.edit_note.title.setText(note["name"])
-                self.edit_note.content.setPlainText(note["content"])
-                self.edit_note.note_id = note_id
-                self.edit_note.end_loading()
-            r.deleteLater()
-        r.finished.connect(req_finished)
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/notes/get/{note_id}")
+            def req_finished():
+                if r.error() == r.NetworkError.NoError:
+                    note = json.loads(bytes(r.readAll()))["note"]
+                    self.edit_note.title.setText(note["name"])
+                    self.edit_note.content.setPlainText(note["content"])
+                    self.edit_note.note_id = note_id
+                    self.edit_note.end_loading()
+                r.deleteLater()
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "notes.json")):
+                self.toast_provider.show_toast("Notes file not found", variant="error")
+            with open(os.path.join("data", "notes.json"), "r") as f:
+                notes = json.loads(f.read())
+            note = notes.get(note_id, {})
+            if not note:
+                self.toast_provider.show_toast("Note not found", variant="error")
+                return
+            self.edit_note.title.setText(note["name"])
+            self.edit_note.content.setPlainText(note["content"])
+            self.edit_note.note_id = note_id
+            self.edit_note.end_loading()
 
     def get_notes(self):
         _clear_layout(self.scroll_layout)
@@ -304,9 +354,39 @@ class Body(QFrame):
                 r.deleteLater()
             r.finished.connect(req_finished)
         else:
-            label = QLabel("You are not logged in.")
-            label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
-            self.scroll_layout.addWidget(label)
+            if not os.path.exists(os.path.join("data", "notes.json")):
+                if not os.path.exists("data"):
+                    os.mkdir("data")
+                with open(os.path.join("data", "notes.json"), "w") as f:
+                    f.write("{}")
+            with open(os.path.join("data", "notes.json"), "r") as f:
+                notes = json.loads(f.read())
+            for i in notes.keys():
+                button = QPushButton(notes[i]["name"].replace("\n", " "))
+                button.setCursor(Qt.CursorShape.PointingHandCursor)
+                button.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: #111;
+                        border: none;
+                        border-radius: 5px;
+                        color: white;
+                        font-size: {int(12 * self.scaleFactor)}px;
+                        text-align: left;
+                        padding: 5px;
+                    }}
+                    QPushButton:hover {{
+                        background-color: #333;
+                    }}
+                    QPushButton:pressed {{
+                        background-color: #444; 
+                    }}
+                """)
+                self.scroll_layout.addWidget(button)
+                button.clicked.connect(lambda checked=False, note_id=i: self.get_note_details(note_id))
+            if not notes:
+                label = QLabel("No local notes")
+                label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
+                self.scroll_layout.addWidget(label)
 
     def align_to_center(self, child=None,):
         child = child
