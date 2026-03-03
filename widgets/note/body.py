@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import uuid
 from json import JSONDecodeError
 
@@ -14,7 +15,7 @@ from modules import request_helpers
 from globals.user import user
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
-from widgets.note import edit_note
+from widgets.note import edit_note, confirm_delete_note
 
 
 def _clear_layout(layout=None):
@@ -29,7 +30,7 @@ def _clear_layout(layout=None):
 
 
 class Body(QFrame):
-    def __init__(self, edit_note_widget: edit_note.EditNote, toast_provider: toast.QToastProvider, parent=None):
+    def __init__(self, edit_note_widget: edit_note.EditNote, confirm_delete_widget: confirm_delete_note.ConfirmDeleteNote, toast_provider: toast.QToastProvider, parent=None):
         super().__init__(parent)
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -56,6 +57,10 @@ class Body(QFrame):
         self.edit_note.close_button.clicked.connect(self.close_note)
         self.edit_note.save_button.clicked.connect(self.save_note)
         self.edit_note.delete_button.clicked.connect(self.delete_note)
+
+        self.confirm_delete_widget = confirm_delete_widget
+        self.confirm_delete_widget.confirm_button.clicked.connect(lambda: self.delete_note(confirmed=True))
+        self.confirm_delete_widget.cancel_button.clicked.connect(self.edit_note.show)
 
         self.scroll_layout = QVBoxLayout(self.scroll_area)
         self.scroll_layout.setContentsMargins(0, 0, int(5 * self.scaleFactor), int(40 * self.scaleFactor))
@@ -197,9 +202,15 @@ class Body(QFrame):
         self.edit_note.show()
         self.edit_note.raise_()
 
-    def delete_note(self):
+    def delete_note(self, confirmed=False):
         if self.edit_note.note_id is None:
             return
+        if not confirmed:
+            self.edit_note.hide()
+            self.confirm_delete_widget.show()
+            self.confirm_delete_widget.raise_()
+            return
+        self.edit_note.show()
         self.edit_note.loading()
         if self.current_user.logged_in:
             r = request_helpers.make_request(f"{SERVER}/api/notes/delete/{self.edit_note.note_id}", "DELETE")
@@ -396,5 +407,6 @@ class Body(QFrame):
 
     def resizeEvent(self, event):
         self.align_to_center(self.edit_note)
+        self.align_to_center(self.confirm_delete_widget)
 
         self.bottom_bar.move(int(10 * self.scaleFactor), self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))

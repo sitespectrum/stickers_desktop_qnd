@@ -12,7 +12,7 @@ from widgets.bookmark import body as bookmark_body, edit_bookmark
 from widgets.sticker import sidebar, body
 from widgets.popups import settings
 from widgets.sticker.popups import add_pack
-from widgets.note import body as note_body, edit_note
+from widgets.note import body as note_body, edit_note, confirm_delete_note
 
 
 def format_exception(exctype, value, traceback_obj):
@@ -132,8 +132,9 @@ class MainWindow(QMainWindow):
         self.notes_layout.setContentsMargins(0, 0, 0, 0)
         self.notes_frame.setLayout(self.notes_layout)
 
+        self.confirm_delete_note = confirm_delete_note.ConfirmDeleteNote(parent=self.stacked_widget)
         self.edit_note_widget = edit_note.EditNote(parent=self.stacked_widget)
-        self.notes_widget = note_body.Body(self.edit_note_widget, self.toast_provider)
+        self.notes_widget = note_body.Body(self.edit_note_widget, self.confirm_delete_note, self.toast_provider)
 
         self.notes_layout.addWidget(self.notes_widget)
 
