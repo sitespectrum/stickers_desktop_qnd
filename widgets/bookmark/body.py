@@ -1,8 +1,12 @@
 import json
 import os
+import uuid
 import webbrowser
 from json import JSONDecodeError
 
+import bs4
+import requests
+from url_normalize import url_normalize
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
 from PySide6.QtGui import QGuiApplication, QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QScrollArea, QGraphicsBlurEffect, \
@@ -12,6 +16,7 @@ from globals.constants import SERVER
 from modules import request_helpers
 
 from globals.user import user
+from modules.request_helpers import make_request
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
 from widgets.bookmark import edit_bookmark
@@ -210,24 +215,37 @@ class Body(QFrame):
         if self.edit_bookmark.bookmark_id is None:
             return
         self.edit_bookmark.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}", "DELETE")
-        def req_finished():
-            self.edit_bookmark.end_loading()
-            if r.error() == r.NetworkError.NoError:
-                self.close_bookmark()
-                self.toast_provider.show_toast("Bookmark deleted successfully.", variant="success")
-                self.get_bookmarks()
-            else:
-                try:
-                    data = bytes(r.readAll())
-                    body = json.loads(data.decode("utf-8")) if data else {}
-                    error = body.get("error", "")
-                    if error:
-                        self.toast_provider.show_toast(error, variant="error")
-                        return
-                except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to delete bookmark.", variant="error")
-        r.finished.connect(req_finished)
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}", "DELETE")
+            def req_finished():
+                self.edit_bookmark.end_loading()
+                if r.error() == r.NetworkError.NoError:
+                    self.close_bookmark()
+                    self.toast_provider.show_toast("Bookmark deleted successfully.", variant="success")
+                    self.get_bookmarks()
+                else:
+                    try:
+                        data = bytes(r.readAll())
+                        body = json.loads(data.decode("utf-8")) if data else {}
+                        error = body.get("error", "")
+                        if error:
+                            self.toast_provider.show_toast(error, variant="error")
+                            return
+                    except JSONDecodeError:
+                        self.toast_provider.show_toast("Failed to delete bookmark.", variant="error")
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "bookmarks.json")):
+                self.toast_provider.show_toast("Bookmarks file not found", variant="error")
+            with open(os.path.join("data", "bookmarks.json"), "r") as f:
+                bookmarks = json.loads(f.read())
+            bookmark = bookmarks.pop(self.edit_bookmark.bookmark_id, {})
+            with open(os.path.join("data", "bookmarks.json"), "w") as f:
+                f.write(json.dumps(bookmarks))
+            self.close_bookmark()
+            self.toast_provider.show_toast("Bookmark deleted successfully.", variant="success")
+            self.get_bookmarks()
+
 
     def save_bookmark(self):
         if self.edit_bookmark.bookmark_id is None:
@@ -236,43 +254,98 @@ class Body(QFrame):
             self.toast_provider.show_toast("Bookmark URL cannot be empty.", variant="warning")
             return
         self.edit_bookmark.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "POST", json_data={
-            "name": self.edit_bookmark.title.text(),
-            "url": self.edit_bookmark.url.text().strip()
-        })
-        def req_finished():
-            self.edit_bookmark.end_loading()
-            if r.error() == r.NetworkError.NoError:
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "POST", json_data={
+                "name": self.edit_bookmark.title.text(),
+                "url": self.edit_bookmark.url.text().strip()
+            })
+            def req_finished():
+                self.edit_bookmark.end_loading()
+                if r.error() == r.NetworkError.NoError:
+                    self.close_bookmark()
+                    self.get_bookmarks()
+                    self.toast_provider.show_toast("Bookmark saved successfully.", variant="success")
+                else:
+                    try:
+                        data = bytes(r.readAll())
+                        body = json.loads(data.decode("utf-8")) if data else {}
+                        error = body.get("error", "")
+                        if error:
+                            self.toast_provider.show_toast(error, variant="error")
+                            return
+                    except JSONDecodeError:
+                        self.toast_provider.show_toast("Failed to save bookmark.", variant="error")
+                r.deleteLater()
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "bookmarks.json")):
+                with open(os.path.join("data", "bookmarks.json"), "w") as f:
+                    f.write("{}")
+            with open(os.path.join("data", "bookmarks.json"), "r") as f:
+                bookmarks = json.loads(f.read())
+            if self.edit_bookmark.bookmark_id == 0:
+                id = str(uuid.uuid4())
+                bookmarks[id] = {
+                    "name": "",
+                    "url": ""
+                }
+                bookmark = bookmarks.get(id, {})
+            else:
+                bookmark = bookmarks.get(self.edit_bookmark.bookmark_id, {})
+            name = self.edit_bookmark.title.text()
+            url = url_normalize(self.edit_bookmark.url.text().strip(), default_scheme="https")
+            if not name:
+                r = make_request(url)
+                def req_finished():
+                    if r.error() == r.NetworkError.NoError:
+                        name = bs4.BeautifulSoup(str(r.readAll()), "html.parser").title.text.strip()
+                        bookmark["name"] = name
+                    else:
+                        bookmark["name"] = url
+                    bookmark["url"] = url
+                    with open(os.path.join("data", "bookmarks.json"), "w") as f:
+                        f.write(json.dumps(bookmarks))
+                    self.close_bookmark()
+                    self.get_bookmarks()
+                    r.deleteLater()
+                r.finished.connect(req_finished)
+            else:
+                bookmark["name"] = name
+                bookmark["url"] = url
+                with open(os.path.join("data", "bookmarks.json"), "w") as f:
+                    f.write(json.dumps(bookmarks))
                 self.close_bookmark()
                 self.get_bookmarks()
-                self.toast_provider.show_toast("Bookmark saved successfully.", variant="success")
-            else:
-                try:
-                    data = bytes(r.readAll())
-                    body = json.loads(data.decode("utf-8")) if data else {}
-                    error = body.get("error", "")
-                    if error:
-                        self.toast_provider.show_toast(error, variant="error")
-                        return
-                except JSONDecodeError:
-                    self.toast_provider.show_toast("Failed to save bookmark.", variant="error")
-            r.deleteLater()
-        r.finished.connect(req_finished)
+
 
     def get_bookmark_details(self, bookmark_id: str):
         self.open_bookmark()
         self.edit_bookmark.bookmark_id = bookmark_id
         self.edit_bookmark.loading()
-        r = request_helpers.make_request(f"{SERVER}/api/bookmarks/get/{bookmark_id}")
-        def req_finished():
-            if r.error() == r.NetworkError.NoError:
-                bookmark = json.loads(bytes(r.readAll()))["bookmark"]
-                self.edit_bookmark.title.setText(bookmark["name"])
-                self.edit_bookmark.url.setText(bookmark["url"])
-                self.edit_bookmark.note_id = bookmark_id
-                self.edit_bookmark.end_loading()
-            r.deleteLater()
-        r.finished.connect(req_finished)
+        if self.current_user.logged_in:
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/get/{bookmark_id}")
+            def req_finished():
+                if r.error() == r.NetworkError.NoError:
+                    bookmark = json.loads(bytes(r.readAll()))["bookmark"]
+                    self.edit_bookmark.title.setText(bookmark["name"])
+                    self.edit_bookmark.url.setText(bookmark["url"])
+                    self.edit_bookmark.note_id = bookmark_id
+                    self.edit_bookmark.end_loading()
+                r.deleteLater()
+            r.finished.connect(req_finished)
+        else:
+            if not os.path.exists(os.path.join("data", "bookmarks.json")):
+                self.toast_provider.show_toast("Bookmarks file not found", variant="error")
+            with open(os.path.join("data", "bookmarks.json"), "r") as f:
+                bookmarks = json.loads(f.read())
+            bookmark = bookmarks.get(bookmark_id, {})
+            if not bookmark:
+                self.toast_provider.show_toast("Bookmark not found", variant="error")
+                return
+            self.edit_bookmark.title.setText(bookmark.get("name", ""))
+            self.edit_bookmark.url.setText(bookmark.get("url", ""))
+            self.edit_bookmark.note_id = bookmark_id
+            self.edit_bookmark.end_loading()
 
     def get_bookmarks(self):
         _clear_layout(self.scroll_layout)
@@ -319,9 +392,42 @@ class Body(QFrame):
 
             r.finished.connect(req_finished)
         else:
-            label = QLabel("You are not logged in.")
-            label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
-            self.scroll_layout.addWidget(label)
+            if not os.path.exists(os.path.join("data", "bookmarks.json")):
+                if not os.path.exists("data"):
+                    os.mkdir("data")
+                with open(os.path.join("data", "bookmarks.json"), "w") as f:
+                    f.write("{}")
+            with open(os.path.join("data", "bookmarks.json"), "r") as f:
+                bookmarks = json.loads(f.read())
+            for i in bookmarks.keys():
+                button = QPushButton(bookmarks[i]["name"].replace("\n", " "))
+                button.setCursor(Qt.CursorShape.PointingHandCursor)
+                button.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: #111;
+                        border: none;
+                        border-radius: 5px;
+                        color: white;
+                        font-size: {int(12 * self.scaleFactor)}px;
+                        text-align: left;
+                        padding: 5px;
+                    }}
+                    QPushButton:hover {{
+                        background-color: #333;
+                    }}
+                    QPushButton:pressed {{
+                        background-color: #444; 
+                    }}
+                """)
+                self.scroll_layout.addWidget(button)
+                button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                button.customContextMenuRequested.connect(lambda checked=False, bookmark_id=i: self.get_bookmark_details(bookmark_id))
+                button.clicked.connect(lambda checked=False, bookmark_url=bookmarks[i]["url"]: self.open_bookmark_url(bookmark_url))
+            if not bookmarks:
+                label = QLabel("No local bookmarks")
+                label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
+                self.scroll_layout.addWidget(label)
+
 
     def align_to_center(self, child=None, ):
         child = child
