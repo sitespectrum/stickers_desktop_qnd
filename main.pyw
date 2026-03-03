@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidge
     QMessageBox, QStackedWidget, QGraphicsOpacityEffect, QLabel
 from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
 from widgets import title_bar, tray_menu, toast, menu
-from widgets.bookmark import body as bookmark_body, edit_bookmark
+from widgets.bookmark import body as bookmark_body, edit_bookmark, confirm_delete_bookmark
 from widgets.sticker import sidebar, body
 from widgets.popups import settings
 from widgets.sticker.popups import add_pack
@@ -150,8 +150,9 @@ class MainWindow(QMainWindow):
         self.bookmarks_layout.setContentsMargins(0, 0, 0, 0)
         self.bookmarks_frame.setLayout(self.bookmarks_layout)
 
+        self.confirm_delete_bookmark = confirm_delete_bookmark.ConfirmDeleteBookmark(parent=self.stacked_widget)
         self.edit_bookmark_widget = edit_bookmark.EditBookmark(parent=self.stacked_widget)
-        self.bookmarks_widget = bookmark_body.Body(self.edit_bookmark_widget, self.toast_provider)
+        self.bookmarks_widget = bookmark_body.Body(self.edit_bookmark_widget, self.confirm_delete_bookmark, self.toast_provider)
 
         self.bookmarks_layout.addWidget(self.bookmarks_widget)
 

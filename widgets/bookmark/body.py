@@ -19,7 +19,7 @@ from globals.user import user
 from modules.request_helpers import make_request
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
-from widgets.bookmark import edit_bookmark
+from widgets.bookmark import edit_bookmark, confirm_delete_bookmark
 
 
 def _clear_layout(layout=None):
@@ -34,7 +34,7 @@ def _clear_layout(layout=None):
 
 
 class Body(QFrame):
-    def __init__(self, edit_bookmark_widget: edit_bookmark.EditBookmark, toast_provider: toast.QToastProvider, parent=None):
+    def __init__(self, edit_bookmark_widget: edit_bookmark.EditBookmark, confirm_delete_bookmark: confirm_delete_bookmark.ConfirmDeleteBookmark, toast_provider: toast.QToastProvider, parent=None):
         super().__init__(parent)
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -60,6 +60,10 @@ class Body(QFrame):
         self.edit_bookmark.close_button.clicked.connect(self.close_bookmark)
         self.edit_bookmark.save_button.clicked.connect(self.save_bookmark)
         self.edit_bookmark.delete_button.clicked.connect(self.delete_bookmark)
+
+        self.confirm_delete_bookmark = confirm_delete_bookmark
+        self.confirm_delete_bookmark.confirm_button.clicked.connect(lambda: self.delete_bookmark(confirmed=True))
+        self.confirm_delete_bookmark.cancel_button.clicked.connect(self.edit_bookmark.show)
 
         self.scroll_layout = QVBoxLayout(self.scroll_area)
         self.scroll_layout.setContentsMargins(0, 0, int(5 * self.scaleFactor), int(40 * self.scaleFactor))
@@ -211,9 +215,15 @@ class Body(QFrame):
         if not webbrowser.open(url, new=2, autoraise=True):
             self.toast_provider.show_toast("Failed to open browser.", variant="error")
 
-    def delete_bookmark(self):
+    def delete_bookmark(self, confirmed: bool = False):
         if self.edit_bookmark.bookmark_id is None:
             return
+        if not confirmed:
+            self.confirm_delete_bookmark.show()
+            self.confirm_delete_bookmark.raise_()
+            self.edit_bookmark.hide()
+            return
+        self.edit_bookmark.show()
         self.edit_bookmark.loading()
         if self.current_user.logged_in:
             r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}", "DELETE")
@@ -437,6 +447,7 @@ class Body(QFrame):
 
     def resizeEvent(self, event):
         self.align_to_center(self.edit_bookmark)
+        self.align_to_center(self.confirm_delete_bookmark)
 
         self.bottom_bar.move(int(10 * self.scaleFactor),
                              self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))
