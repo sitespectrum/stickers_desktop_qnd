@@ -212,6 +212,25 @@ class Sidebar(QFrame):
         add_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
         add_button.clicked.connect(lambda checked=False: self.add_pack())
 
+        favourites_button = QPushButton()
+        favourites_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
+        favourites_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        favourites_button.setStyleSheet("""
+            QPushButton {
+                        background-color: #111;
+                        border: none;
+                        border-radius: 5px;
+                    }
+                    QPushButton:hover {
+                        background-color: #333;
+                    }
+                    QPushButton:pressed {
+                        background-color: #444;
+                    }
+        """)
+        favourites_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "heart.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
+
+
         refresh_button = QPushButton()
         refresh_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
         refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -238,6 +257,8 @@ class Sidebar(QFrame):
         self.content_layout.addSpacing(int(5 * self.scaleFactor))
         self.content_layout.addWidget(separator)
         self.content_layout.addSpacing(int(5 * self.scaleFactor))
+        self.content_layout.addWidget(favourites_button)
+        self.content_layout.addSpacing(int(2 * self.scaleFactor))
         self.content_layout.addWidget(add_button)
         self.content_layout.addSpacing(int(2 * self.scaleFactor))
         self.content_layout.addWidget(refresh_button)
