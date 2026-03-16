@@ -143,8 +143,10 @@ class Body(QFrame):
         self.scroll_content.setLayout(self.layout)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
-        self.welcome = QLabel("Welcome back! To begin, select a sticker pack from the left.")
-        self.layout.addWidget(self.welcome)
+        self.getting_ready_label = QLabel("Welcome back! Please wait for a moment while we prepare the application...")
+        self.getting_ready_label.setWordWrap(True)
+        self.getting_ready_label.setStyleSheet(f"font-size: {14 * self.scaleFactor}px")
+        self.layout.addWidget(self.getting_ready_label)
 
         self.current_user = user
         self.current_user.logged_inChanged.connect(self._clear_layout)

@@ -93,6 +93,11 @@ class Body(QFrame):
 
         self.bottom_bar.setFixedWidth(self.bottom_layout.sizeHint().width())
 
+        self.getting_ready_label = QLabel("Please wait for a moment while we prepare the application...")
+        self.getting_ready_label.setWordWrap(True)
+        self.getting_ready_label.setStyleSheet(f"font-size: {14 * self.scaleFactor}px")
+        self.scroll_layout.addWidget(self.getting_ready_label)
+
         self.scroll_area.setStyleSheet("""
             QScrollBar:vertical {
                 width: 5px;

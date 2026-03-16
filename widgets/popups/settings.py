@@ -133,8 +133,7 @@ class Settings(QFrame):
 
         def req_finished():
             self.login_button.setDisabled(False)
-            status = request_helpers.get_status_code(r)
-            if status == 200:
+            if r.error() == r.NetworkError.NoError:
                 self.current_user.logged_in = False
                 self.toast_provider.show_toast("Logged out successfully", variant="success")
             r.deleteLater()
@@ -145,14 +144,16 @@ class Settings(QFrame):
         r = request_helpers.make_request(url=f"{SERVER}/api/auth/profile/me")
 
         def req_finished():
-            status = request_helpers.get_status_code(r)
             data = bytes(r.readAll())
             body = json.loads(data.decode("utf-8")) if data else {}
-            if status == 200:
+            if r.error() == r.NetworkError.NoError:
                 self.current_user.username = body["username"]
                 self.current_user.display_name = body["display_name"]
                 self.current_user.role = body["role"]
                 self.current_user.logged_in = True
+            if r.error() == r.NetworkError.ConnectionRefusedError:
+                self.current_user.logged_in = False
+                self.toast_provider.show_toast("Failed to connect to server. Continuing in offline mode", variant="error", timeout=5000)
             else:
                 self.current_user.logged_in = False
             r.deleteLater()
@@ -178,6 +179,8 @@ class Settings(QFrame):
         def req_finished():
             if r.error() == r.NetworkError.NoError:
                 self.get_user()
+            else:
+                self.toast_provider.show_toast("Failed to login", variant="error")
             r.deleteLater()
 
         r.finished.connect(req_finished)
