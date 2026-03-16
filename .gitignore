@@ -3,3 +3,8 @@ cookies.json
 stickers
 reports
 data
+.venv
+.venv_installer
+build
+dist
+/main.spec

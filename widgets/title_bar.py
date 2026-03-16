@@ -30,7 +30,7 @@ class TitleBar(QFrame):
         self.menu_button.setCheckable(True)
         self.layout.addWidget(self.menu_button)
 
-        self.label = QLabel("Storeß Desktop")
+        self.label = QLabel("Æther Desktop")
         self.label.setStyleSheet(f"color: #999; font-size: {10 * self.scaleFactor}px")
         self.layout.addWidget(self.label)
 

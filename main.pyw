@@ -6,7 +6,9 @@ import traceback
 from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
     QMessageBox, QStackedWidget, QGraphicsOpacityEffect, QLabel
-from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve, QSize
+
+from modules.ui_helpers import svg_to_icon
 from widgets import title_bar, tray_menu, toast, menu
 from widgets.bookmark import body as bookmark_body, edit_bookmark, confirm_delete_bookmark
 from widgets.sticker import sidebar, body
@@ -30,7 +32,7 @@ def exception_hook(exctype, value, traceback_obj):
     with open(f"reports/{time_stamp}.txt", "w") as f:
         f.write(exception_str)
 
-    QMessageBox.critical(None, "Storeß Desktop | Error", f"<p>An unexpected error occurred<br>"
+    QMessageBox.critical(None, "Æther Desktop | Error", f"<p>An unexpected error occurred<br>"
                                         f"<pre>{str(exctype.__name__)}</pre><br>"
                                         f"The application will quit. Please contact support.<br>"
                                         f"A detailed error message has been saved here: <br>"
@@ -45,8 +47,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Storeß Desktop")
-        self.setWindowIcon(QIcon('utils/icon.png'))
+        self.setWindowTitle("Æther Desktop")
+        self.setWindowIcon(QIcon(svg_to_icon("utils/aeicon.svg", QSize(100, 100), None)))
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
@@ -61,8 +63,8 @@ class MainWindow(QMainWindow):
         self.toast_provider.show()
 
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('utils/icon.png'))
-        self.tray_icon.setToolTip("Storeß Desktop")
+        self.tray_icon.setIcon(QIcon(svg_to_icon("utils/aeicon.svg", QSize(100, 100), None)))
+        self.tray_icon.setToolTip("Æther Desktop")
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.handle_tray_click)
 
