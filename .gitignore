@@ -9,3 +9,4 @@ build
 dist
 /main.spec
 _temp
+test

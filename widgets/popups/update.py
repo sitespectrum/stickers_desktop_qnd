@@ -116,49 +116,33 @@ class Update(QFrame):
 
         for root, dirs, _files in os.walk(root_dir):
             for fileName in _files:
-                # Use '/' as the directory separator
-                file_path = os.path.join(root, fileName).replace("\\", "/")
-                # Remove the leading "_temp/" from the file_path
-                file_path = file_path.replace(root_dir + "/", "")
+                file_path = os.path.join(os.path.join(root, fileName))
                 files.append(file_path)
 
         file_list = []
         for i in files:
-            print(i)
-            if ".zip" not in i and i != "tele-py.exe":
+            if ".zip" not in i and "aether.exe" not in i:
                 file_list.append(i)
 
-        print(list(file_list))
-
-        self.update_button.setText("Moving files...")
-
-        source_dir = "_temp"
-        target_dir = "test"
+        target_dir = ""
 
         for i in file_list:
-            source_path = os.path.join(source_dir, i)  # Construct the source path
-            target_path = os.path.join(target_dir, i)  # Construct the target path
-
-            if os.path.exists(source_path):
-                try:
-                    # Move the file to the target directory
-                    shutil.move(source_path, target_path)
-                    print(f"Moved {source_path} to {target_path}")
-                except Exception as error:
-                    print(f"{error} {error.args}")
-                    return
+            source_path = i
+            target_path = i.replace(root_dir, target_dir)
+            if os.path.exists(target_path):
+                shutil.move(source_path, target_path)
             else:
-                try:
-                    print(f"{source_path} not found, creating directory and moving...")
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    shutil.move(os.path.join(source_dir, i), target_path)
-                    print(f"Moved {source_path} to {target_path}")
-                except Exception as error:
-                    print(f"{error} {error.args}")
-                    return
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                shutil.move(i, target_path)
 
+        os.replace("_temp/aether.exe", "tempfile.exe")
+        os.replace("aether.exe", "aether-old.exe")
+        os.replace("tempfile.exe", "aether.exe")
+
+        shutil.rmtree("_temp")
         self.update_running = False
         self.progress_bar.hide()
+        self.toast_provider.show_toast("Update complete. Restart the application to apply the changes.", variant="success", timeout=10000)
 
     def download_update(self):
         if self.update_running:
