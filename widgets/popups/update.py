@@ -1,9 +1,15 @@
+import json
+import os.path
+import shutil
+import webbrowser
+from zipfile import ZipFile
+
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor, QGuiApplication
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar
 
-from globals.constants import VERSION
-from modules import ui_helpers
+from globals.constants import VERSION, GITHUB_API
+from modules import ui_helpers, request_helpers
 from widgets import toast
 
 
@@ -12,6 +18,20 @@ class Update(QFrame):
         super().__init__(parent)
         self.setObjectName("update")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        self.primary_screen = QGuiApplication.primaryScreen()
+        self.scaleFactor = self.primary_screen.devicePixelRatio()
+
+        self.release_notes_url = ""
+        self.update_package_url = ""
+        self.update_package_name = ""
+        self.update_running = False
+
+        self.progress_bar = QProgressBar(parent=self)
+        self.progress_bar.hide()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setFixedWidth(int(200 * self.scaleFactor))
+        self.progress_bar.setTextVisible(False)
 
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
@@ -60,6 +80,18 @@ class Update(QFrame):
         self.check_for_update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
         self.layout.addWidget(self.check_for_update_button)
 
+        self.release_notes_button = QPushButton("Release notes")
+        self.release_notes_button.clicked.connect(self.open_notes)
+        self.release_notes_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.release_notes_button.hide()
+        self.layout.addWidget(self.release_notes_button)
+
+        self.update_button = QPushButton("Update")
+        self.update_button.clicked.connect(self.download_update)
+        self.update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.layout.addWidget(self.update_button)
+        self.update_button.hide()
+
         self.setStyleSheet("""
             #update {
                 background-color: #222;
@@ -69,11 +101,147 @@ class Update(QFrame):
 
         self.hide()
 
+    def update_application(self):
+        self.progress_bar.setMaximum(0)
+        self.progress_bar.show()
+        self.progress_bar.setValue(0)
+        self.progress_bar.raise_()
+
+        with ZipFile(os.path.join("_temp", self.update_package_name), "r") as zip_ref:
+            zip_ref.extractall(path="_temp")
+        os.remove(os.path.join("_temp", self.update_package_name))
+
+        files = []
+        root_dir = "_temp"
+
+        for root, dirs, _files in os.walk(root_dir):
+            for fileName in _files:
+                # Use '/' as the directory separator
+                file_path = os.path.join(root, fileName).replace("\\", "/")
+                # Remove the leading "_temp/" from the file_path
+                file_path = file_path.replace(root_dir + "/", "")
+                files.append(file_path)
+
+        file_list = []
+        for i in files:
+            print(i)
+            if ".zip" not in i and i != "tele-py.exe":
+                file_list.append(i)
+
+        print(list(file_list))
+
+        self.update_button.setText("Moving files...")
+
+        source_dir = "_temp"
+        target_dir = "test"
+
+        for i in file_list:
+            source_path = os.path.join(source_dir, i)  # Construct the source path
+            target_path = os.path.join(target_dir, i)  # Construct the target path
+
+            if os.path.exists(source_path):
+                try:
+                    # Move the file to the target directory
+                    shutil.move(source_path, target_path)
+                    print(f"Moved {source_path} to {target_path}")
+                except Exception as error:
+                    print(f"{error} {error.args}")
+                    return
+            else:
+                try:
+                    print(f"{source_path} not found, creating directory and moving...")
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    shutil.move(os.path.join(source_dir, i), target_path)
+                    print(f"Moved {source_path} to {target_path}")
+                except Exception as error:
+                    print(f"{error} {error.args}")
+                    return
+
+        self.update_running = False
+        self.progress_bar.hide()
+
+    def download_update(self):
+        if self.update_running:
+            self.toast_provider.show_toast("An update is already running.", variant="warning")
+            return
+        self.update_running = True
+        self.progress_bar.setMaximum(100)
+        self.progress_bar.show()
+        self.progress_bar.setValue(0)
+        self.progress_bar.raise_()
+        if not self.update_package_url:
+            self.toast_provider.show_toast("No update package found.", variant="error")
+            return
+        if not os.path.exists("_temp"):
+            os.mkdir("_temp")
+        reply = request_helpers.make_request(self.update_package_url)
+        file_name = self.update_package_name.split("/")[-1]
+
+        def on_progress(bytes_received, bytes_total):
+            pct = bytes_received / bytes_total * 100
+            self.progress_bar.setValue(pct)
+
+        def on_finished():
+            self.progress_bar.setMaximum(0)
+            data = reply.readAll().data()
+            with open(os.path.join("_temp", file_name), "wb") as f:
+                f.write(data)
+            reply.deleteLater()
+            self.progress_bar.hide()
+            self.update_application()
+
+        def on_error(code):
+            self.update_running = False
+            self.progress_bar.hide()
+            self.toast_provider.show_toast("Failed to download update package.", variant="error")
+
+        reply.downloadProgress.connect(on_progress)
+        reply.finished.connect(on_finished)
+        reply.errorOccurred.connect(on_error)
+
+    def open_notes(self):
+        if self.release_notes_url:
+            webbrowser.open(self.release_notes_url)
+
     def check_for_update(self):
-        self.latest_version = "1.0.0"
-        self.latest_version_label.setText(f"Latest version: v{self.latest_version}")
-        if self.latest_version and self.latest_version != VERSION:
-            self.toast_provider.show_toast("An update is available.", timeout=6000, variant="info")
+        r = request_helpers.make_request(
+            url=GITHUB_API
+        )
+        self.check_for_update_button.setText("Checking for updates...")
+        self.check_for_update_button.setDisabled(True)
+        def on_req_success():
+            self.check_for_update_button.setText("Check for updates")
+            self.check_for_update_button.setDisabled(False)
+            if r.error() == r.NetworkError.NoError:
+                data = bytes(r.readAll())
+                body = json.loads(data.decode("utf-8")) if data else {}
+                release_tag = body.get("tag_name")
+                self.latest_version = release_tag.removeprefix("v")
+                self.latest_version_label.setText(f"Latest version: v{self.latest_version}")
+                if release_tag.removeprefix("v") != VERSION:
+                    self.release_notes_button.show()
+                    self.update_button.show()
+                    self.check_for_update_button.hide()
+                    self.release_notes_url = body.get("html_url")
+                    self.toast_provider.show_toast("An update is available.", timeout=0, variant="info")
+                    for i in body.get("assets", []):
+                        if i.get("content_type") == "application/x-zip-compressed":
+                            self.update_package_url = i.get("browser_download_url")
+                            self.update_package_name = i.get("name")
+                            break
+                    else:
+                        self.toast_provider.show_toast("No update package found.", variant="error")
+                else:
+                    self.toast_provider.show_toast("You are already on the latest version.", variant="success")
+
+            else:
+                self.toast_provider.show_toast("Failed to check for updates.", variant="error")
+
+            r.deleteLater()
+        r.finished.connect(on_req_success)
+
+    def resizeEvent(self, event):
+        self.progress_bar.move((self.width() // 2) - (self.progress_bar.width() // 2), self.height() - self.progress_bar.height())
 
     def open(self):
         self.show()
