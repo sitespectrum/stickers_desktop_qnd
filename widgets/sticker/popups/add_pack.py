@@ -128,6 +128,8 @@ class AddPack(QFrame):
     def download_pack(self):
         self.download_already_running_label.setHidden(True)
         pack = self.pack_input.text()
+        if not pack:
+            return
         if self.body_widget.downloader.downloading:
             self.download_already_running_label.setHidden(False)
             return
