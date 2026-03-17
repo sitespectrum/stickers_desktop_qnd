@@ -186,13 +186,14 @@ class Body(QFrame):
         if not failed:
             return
         if os.path.exists(os.path.join("stickers", self.current_pack)):
-            os.rmdir(os.path.join("stickers", self.current_pack))
+            shutil.rmtree(os.path.join("stickers", self.current_pack))
             self.load_stickers(self.current_pack)
             self.download_failed.show()
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()
 
     def download_pack(self, pack: str = "", no_switch=False, add=False, refresh_sidebar=False, close_popup=None):
+        self.current_pack = pack
         if self.downloader.downloading:
             self.toast_provider.show_toast("Another pack is already downloading", variant="warning", timeout=1500)
             return
@@ -204,8 +205,9 @@ class Body(QFrame):
             os.mkdir(os.path.join("stickers", pack))
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:
-                    shutil.rmtree(os.path.join("stickers", pack))
-                if r.error() == r.NetworkError.ContentNotFoundError:
+                    self.toast_provider.show_toast("Unable to download", variant="error")
+                    return
+                elif r.error() == r.NetworkError.ContentNotFoundError:
                     self.toast_provider.show_toast("Pack not found", variant="error")
                     return
                 if close_popup is not None:
