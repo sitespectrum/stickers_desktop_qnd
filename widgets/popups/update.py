@@ -107,7 +107,7 @@ class Update(QFrame):
 
         self.setStyleSheet("""
             #update {
-                background-color: #222;
+                background-color: #212121;
                 border-top-left-radius: 10px;
             }
         """)
