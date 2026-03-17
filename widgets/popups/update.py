@@ -99,6 +99,12 @@ class Update(QFrame):
         self.layout.addWidget(self.restart_app)
         self.restart_app.hide()
 
+        self.update_notice = QLabel("Application successfully updated. Changes will take effect after restarting the application.")
+        self.update_notice.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
+        self.update_notice.setWordWrap(True)
+        self.layout.addWidget(self.update_notice)
+        self.update_notice.hide()
+
         self.setStyleSheet("""
             #update {
                 background-color: #222;
@@ -149,6 +155,8 @@ class Update(QFrame):
         self.restart_app.show()
         self.update_button.hide()
 
+        self.update_notice.show()
+
         shutil.rmtree("_temp")
         self.update_running = False
         self.progress_bar.hide()
@@ -176,22 +184,22 @@ class Update(QFrame):
             self.progress_bar.setValue(pct)
 
         def on_finished():
-            self.progress_bar.setMaximum(0)
-            data = reply.readAll().data()
-            with open(os.path.join("_temp", file_name), "wb") as f:
-                f.write(data)
-            reply.deleteLater()
-            self.progress_bar.hide()
-            self.update_application()
+            if reply.error() == reply.NetworkError.NoError:
+                self.progress_bar.setMaximum(0)
+                data = reply.readAll().data()
+                with open(os.path.join("_temp", file_name), "wb") as f:
+                    f.write(data)
+                self.progress_bar.hide()
+                self.update_application()
+            else:
+                self.update_running = False
+                self.progress_bar.hide()
+                self.toast_provider.show_toast("Failed to download update package.", variant="error")
 
-        def on_error(code):
-            self.update_running = False
-            self.progress_bar.hide()
-            self.toast_provider.show_toast("Failed to download update package.", variant="error")
+            reply.deleteLater()
 
         reply.downloadProgress.connect(on_progress)
         reply.finished.connect(on_finished)
-        reply.errorOccurred.connect(on_error)
 
     def open_notes(self):
         if self.release_notes_url:
@@ -217,7 +225,7 @@ class Update(QFrame):
                     self.update_button.show()
                     self.check_for_update_button.hide()
                     self.release_notes_url = body.get("html_url")
-                    self.toast_provider.show_toast("An update is available.", timeout=0, variant="info")
+                    self.toast_provider.show_toast("An update is available.", timeout=0 if not self.isVisible() else 3000, variant="info")
                     for i in body.get("assets", []):
                         if i.get("content_type") == "application/x-zip-compressed":
                             self.update_package_url = i.get("browser_download_url")
@@ -226,7 +234,8 @@ class Update(QFrame):
                     else:
                         self.toast_provider.show_toast("No update package found.", variant="error")
                 else:
-                    self.toast_provider.show_toast("You are already on the latest version.", variant="success")
+                    if self.isVisible():
+                        self.toast_provider.show_toast("You are already using the latest version.", variant="success")
 
             else:
                 self.toast_provider.show_toast("Failed to check for updates.", variant="error")

@@ -11,7 +11,7 @@ from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
 from globals.constants import SERVER
 from widgets import toast
-from . import update
+from widgets.popups import update
 
 
 class Settings(QFrame):
@@ -30,6 +30,7 @@ class Settings(QFrame):
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
         self.update_widget = update.Update(self.toast_provider, self.restart, parent=self)
+        self.update_widget.check_for_update()
 
         self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setStyleSheet("""
