@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QSize
 from PySide6.QtGui import QGuiApplication, QRegion, QIcon, QColor
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout, QMainWindow
 
 from modules.ui_helpers import svg_to_icon
 
@@ -95,7 +95,7 @@ class Toast(QFrame):
 
 
 class QToastProvider(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QMainWindow=None):
         super().__init__(parent)
 
         self.setObjectName("toast_holder")
@@ -129,14 +129,35 @@ class QToastProvider(QFrame):
         self._update_mask()
 
     def show_toast(self, text, timeout=3000, variant="info"):
-        self.raise_()
         toast = Toast(text, timeout, variant, parent=self)
+        toast.adjustSize()
 
+        margins = self.layout.contentsMargins()
+        spacing = self.layout.spacing()
+
+        current_height = sum(i.sizeHint().height() for i in self.toasts)
+        if self.toasts:
+            current_height += spacing * (len(self.toasts) - 1)
+
+        available_height = self.parent().height() - margins.top() - margins.bottom()
+        needed_height = current_height + (spacing if self.toasts else 0) + toast.sizeHint().height()
+
+        while self.toasts and needed_height > available_height:
+            last_toast = self.toasts.pop(0)
+            self.layout.removeWidget(last_toast)
+            last_toast.close()
+            last_toast.deleteLater()
+
+            current_height = sum(i.sizeHint().height() for i in self.toasts)
+            if self.toasts:
+                current_height += spacing * (len(self.toasts) - 1)
+            needed_height = current_height + (spacing if self.toasts else 0) + toast.sizeHint().height()
+
+        self.raise_()
         self.layout.addWidget(toast)
         self.toasts.append(toast)
 
         toast.show_with_animation()
-
         toast.destroyed.connect(lambda: self._cleanup(toast))
 
         QTimer.singleShot(0, self._update_mask)

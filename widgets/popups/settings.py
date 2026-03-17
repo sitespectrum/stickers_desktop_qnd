@@ -11,6 +11,7 @@ from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
 from globals.constants import SERVER
 from widgets import toast
+from . import update
 
 
 class Settings(QFrame):
@@ -26,6 +27,8 @@ class Settings(QFrame):
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
+
+        self.update_widget = update.Update(self.toast_provider, parent=self)
 
         self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setStyleSheet("""
@@ -90,12 +93,18 @@ class Settings(QFrame):
         self.login_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
         self.login_button.clicked.connect(self.start_login)
 
+        self.update_button = QPushButton("Update application")
+        self.update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.update_button.clicked.connect(self.update_widget.open)
+
         self.title = QLabel("Settings")
         self.title.setStyleSheet(f"font-size: {20 * self.scaleFactor}px; font-weight: bold;")
         self.layout.addWidget(self.close_button)
         self.layout.addWidget(self.title)
         self.layout.addWidget(self.user_label)
         self.layout.addWidget(self.login_button)
+        self.layout.addSpacing(int(20 * self.scaleFactor))
+        self.layout.addWidget(self.update_button)
 
         self.server_thread = handle_oauth_login.OAuthServerThread()
         handle_oauth_login.OAuthHandler.thread_ref = self.server_thread
@@ -209,3 +218,6 @@ class Settings(QFrame):
             self.server_thread.quit()
             self.server_thread.wait()
             self.server_running = False
+
+    def resizeEvent(self, event):
+        self.update_widget.setFixedSize(self.size())
