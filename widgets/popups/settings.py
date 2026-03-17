@@ -15,20 +15,21 @@ from . import update
 
 
 class Settings(QFrame):
-    def __init__(self,toast_provider: toast.QToastProvider , parent=None):
+    def __init__(self,toast_provider: toast.QToastProvider, restart, parent=None):
         super().__init__(parent)
         self.current_user = user.user
         self.current_user.logged_inChanged.connect(self.set_user)
         self.server_running = False
         self.setObjectName("settings")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.restart = restart
 
         self.toast_provider = toast_provider
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.update_widget = update.Update(self.toast_provider, parent=self)
+        self.update_widget = update.Update(self.toast_provider, self.restart, parent=self)
 
         self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setStyleSheet("""

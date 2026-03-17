@@ -14,10 +14,11 @@ from widgets import toast
 
 
 class Update(QFrame):
-    def __init__(self,toast_provider: toast.QToastProvider , parent=None):
+    def __init__(self,toast_provider: toast.QToastProvider, restart, parent=None):
         super().__init__(parent)
         self.setObjectName("update")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.restart = restart
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
@@ -92,6 +93,12 @@ class Update(QFrame):
         self.layout.addWidget(self.update_button)
         self.update_button.hide()
 
+        self.restart_app = QPushButton("Restart application")
+        self.restart_app.clicked.connect(self.restart)
+        self.restart_app.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.layout.addWidget(self.restart_app)
+        self.restart_app.hide()
+
         self.setStyleSheet("""
             #update {
                 background-color: #222;
@@ -124,7 +131,7 @@ class Update(QFrame):
             if ".zip" not in i and "aether.exe" not in i:
                 file_list.append(i)
 
-        target_dir = ""
+        target_dir = "test"
 
         for i in file_list:
             source_path = i
@@ -138,6 +145,9 @@ class Update(QFrame):
         os.replace("_temp/aether.exe", "tempfile.exe")
         os.replace("aether.exe", "aether-old.exe")
         os.replace("tempfile.exe", "aether.exe")
+
+        self.restart_app.show()
+        self.update_button.hide()
 
         shutil.rmtree("_temp")
         self.update_running = False

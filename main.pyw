@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import time
 import traceback
@@ -42,6 +43,11 @@ def exception_hook(exctype, value, traceback_obj):
     app.quit()
 
 
+def restart_with_new_binary():
+    new_exe = os.path.join(os.path.dirname(sys.executable), "aether.exe")
+    subprocess.Popen([new_exe])
+    time.sleep(0.2)
+    QApplication.quit()
 
 class MainWindow(QMainWindow):
 
@@ -235,7 +241,7 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        self.settings_widget = settings.Settings(self.toast_provider, parent=self.central_widget)
+        self.settings_widget = settings.Settings(self.toast_provider, restart_with_new_binary, parent=self.central_widget)
 
         self.overlay = QWidget(self.central_widget)
         self.overlay.setGeometry(self.stacked_widget.rect())
