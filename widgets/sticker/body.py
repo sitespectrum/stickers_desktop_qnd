@@ -193,6 +193,7 @@ class Body(QFrame):
             self.download_failed.raise_()
 
     def download_pack(self, pack: str = "", no_switch=False, add=False, refresh_sidebar=False, close_popup=None):
+        pack = pack.lower().split("/")[-1]
         if self.downloader.downloading:
             self.toast_provider.show_toast("Another pack is already downloading", variant="warning", timeout=1500)
             return

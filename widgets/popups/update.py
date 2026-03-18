@@ -160,7 +160,7 @@ class Update(QFrame):
         shutil.rmtree("_temp")
         self.update_running = False
         self.progress_bar.hide()
-        self.toast_provider.show_toast("Update complete. Restart the application to apply the changes.", variant="success", timeout=10000)
+        self.toast_provider.show_toast("Update complete. Please restart the application to apply the changes.", variant="success", timeout=0)
 
     def download_update(self):
         if self.update_running:

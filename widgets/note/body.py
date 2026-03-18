@@ -256,7 +256,7 @@ class Body(QFrame):
             return
         self.edit_note.loading()
         if self.current_user.logged_in:
-            r = request_helpers.make_request(f"{SERVER}/api/notes/save/{self.edit_note.note_id}", "POST", json_data={
+            r = request_helpers.make_request(f"{SERVER}/api/notes/save/{self.edit_note.note_id}", "PUT", json_data={
                 "name": self.edit_note.title.text(),
                 "content": self.edit_note.content.toPlainText()
             })

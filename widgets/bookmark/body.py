@@ -270,7 +270,7 @@ class Body(QFrame):
             return
         self.edit_bookmark.loading()
         if self.current_user.logged_in:
-            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "POST", json_data={
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "PUT", json_data={
                 "name": self.edit_bookmark.title.text(),
                 "url": self.edit_bookmark.url.text().strip()
             })
