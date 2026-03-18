@@ -124,17 +124,28 @@ class QToastProvider(QFrame):
         self.toasts = []
 
     def _update_mask(self):
-        if not self.toasts:
-            self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        else:
-            self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
-        region = QRegion()
-        for toast in self.toasts:
-            if toast is None or not toast.isVisible():
-                continue
-            r = toast.geometry()
-            region = region.united(QRegion(r))
-        self.setMask(region)
+        try:
+            has_visible_toasts = False
+
+            region = QRegion()
+            for toast in self.toasts:
+                if toast is None or not toast.isVisible():
+                    continue
+                has_visible_toasts = True
+                r = toast.geometry()
+                region = region.united(QRegion(r))
+
+            self.setAttribute(
+                Qt.WidgetAttribute.WA_TransparentForMouseEvents,
+                not has_visible_toasts,
+            )
+            self.setMask(region)
+        except RuntimeError:
+            return
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self._update_mask)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -175,6 +186,9 @@ class QToastProvider(QFrame):
         QTimer.singleShot(0, self._update_mask)
 
     def _cleanup(self, toast):
-        if toast in self.toasts:
-            self.toasts.remove(toast)
-        self._update_mask()
+        try:
+            if toast in self.toasts:
+                self.toasts.remove(toast)
+            self._update_mask()
+        except RuntimeError:
+            return
