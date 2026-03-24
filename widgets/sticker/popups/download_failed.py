@@ -34,6 +34,7 @@ class DownloadFailed(QFrame):
         """)
 
         self.title = QLabel("Failed to download pack.")
+        self.title.setStyleSheet(f"font-weight: bold; font-size: {11 * self.scaleFactor}px;")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.description = QLabel()
         self.description.setAlignment(Qt.AlignmentFlag.AlignCenter)
