@@ -295,7 +295,7 @@ class Sidebar(QFrame):
         self.content_layout.addSpacing(int(5 * self.scaleFactor))
         if self.current_user.logged_in:
             self.content_layout.addWidget(favourites_button)
-        self.content_layout.addSpacing(int(2 * self.scaleFactor))
+            self.content_layout.addSpacing(int(2 * self.scaleFactor))
         self.content_layout.addWidget(add_button)
         self.content_layout.addSpacing(int(2 * self.scaleFactor))
         self.content_layout.addWidget(refresh_button)
