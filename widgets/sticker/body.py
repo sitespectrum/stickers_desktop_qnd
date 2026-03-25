@@ -166,6 +166,9 @@ class Body(QFrame):
             pass
 
     def download_favourites(self):
+        if self.downloader.downloading:
+            self.toast_provider.show_toast("Another pack is already downloading", variant="warning", timeout=1500)
+            return
         if os.path.exists(os.path.join("stickers", "favourites")):
             shutil.rmtree(os.path.join("stickers", "favourites"))
             os.mkdir(os.path.join("stickers", "favourites"))
