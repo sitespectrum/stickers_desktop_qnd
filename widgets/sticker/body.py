@@ -162,7 +162,7 @@ class Body(QFrame):
         self.load_stickers("favourites")
         try:
             self.downloader.pack_downloaded.disconnect(self.load_favourites)
-        except:
+        except RuntimeWarning:
             pass
 
     def download_favourites(self):

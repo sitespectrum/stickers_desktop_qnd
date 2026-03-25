@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 from pathlib import Path
 
 from PySide6.QtCore import QUrl, QByteArray
@@ -16,10 +17,9 @@ def get_status_code(reply):
 def get_cookies() -> dict:
     if not COOKIES_PATH.exists():
         return {}
-    # noinspection PyBroadException
     try:
         return json.loads(COOKIES_PATH.read_text(encoding="utf-8")) or {}
-    except Exception:
+    except JSONDecodeError:
         return {}
 
 
