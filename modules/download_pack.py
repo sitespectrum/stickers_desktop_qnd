@@ -160,7 +160,8 @@ class DownloadPack(QObject):
 
                     chunks = _chunk_list(downloadable)
                     self._threads = [_DownloadThread(chunk, pack_name) for chunk in chunks]
-                    self._threads.append(_DownloadThumbnail(body.get("thumbnail"), pack_name))
+                    if body.get("thumbnail"):
+                        self._threads.append(_DownloadThumbnail(body.get("thumbnail"), pack_name))
 
                     for thread in self._threads:
                         thread.progress.connect(on_item_processed)
@@ -183,6 +184,6 @@ class DownloadPack(QObject):
                 self.percent_changed.emit(100)
                 self.download_failed.emit("Unexpected error downloading pack")
 
-        self._reply = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack_name}")
+        self._reply = request_helpers.make_request(f"{SERVER}/api/stickers/favourites" if pack_name == "favourites" else f"{SERVER}/api/stickers/get_pack/{pack_name}")
         self.percent_changed.emit(0)
         self._reply.finished.connect(on_req_finished)

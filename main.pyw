@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         self.add_pack_widget = add_pack.AddPack(parent=self.stacked_widget, body_widget=self.stickers_widget)
         self.add_pack_widget.resize(self.height() - self.title_bar.height(), self.width())
 
-        self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
+        self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, self.stickers_widget.load_favourites, body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
         self.stickers_layout.addWidget(self.stickers_sidebar)
 
         self.add_pack_widget.sidebar_widget = self.stickers_sidebar

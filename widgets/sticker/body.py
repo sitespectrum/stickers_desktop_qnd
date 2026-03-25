@@ -33,6 +33,13 @@ def get_rel_pos(widget, parent, main_window):
 class Body(QFrame):
     def __init__(self, toast_provider: toast.QToastProvider, main_window=None):
         super().__init__()
+
+        if not os.path.exists(os.path.join("stickers")):
+            os.mkdir("stickers")
+
+        if not os.path.exists(os.path.join("stickers", "favourites")):
+            os.mkdir(os.path.join("stickers", "favourites"))
+
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.primary_screen = QGuiApplication.primaryScreen()
@@ -151,6 +158,21 @@ class Body(QFrame):
         self.current_user = user
         self.current_user.logged_inChanged.connect(self._clear_layout)
 
+    def load_favourites(self):
+        self.load_stickers("favourites")
+        try:
+            self.downloader.pack_downloaded.disconnect(self.load_favourites)
+        except:
+            pass
+
+    def download_favourites(self):
+        if os.path.exists(os.path.join("stickers", "favourites")):
+            shutil.rmtree(os.path.join("stickers", "favourites"))
+            os.mkdir(os.path.join("stickers", "favourites"))
+        self.downloader.download_pack("favourites")
+        if self.current_pack == "favourites":
+            self.downloader.pack_downloaded.connect(self.load_favourites)
+
     def close_sticker_preview(self):
         self.preview_open = False
         self.blur_out_effect.start()
@@ -201,7 +223,7 @@ class Body(QFrame):
             if not os.path.exists(os.path.join("stickers")):
                 os.mkdir(os.path.join("stickers"))
 
-            r = request_helpers.make_request(f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true")
+            r = request_helpers.make_request((f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true"))
             os.mkdir(os.path.join("stickers", pack))
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:

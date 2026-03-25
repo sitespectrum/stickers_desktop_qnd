@@ -4,7 +4,7 @@ import os
 
 from PySide6.QtCore import Qt, QSize, QPoint
 from PySide6.QtGui import QIcon, QPixmap, QGuiApplication, QColor
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea, QMenu
 
 from globals.user import user
 from globals.constants import SERVER
@@ -17,12 +17,14 @@ from widgets.sticker.popups import add_pack
 
 
 class Sidebar(QFrame):
-    def __init__(self, toast_provider: toast.QToastProvider, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
+    def __init__(self, toast_provider: toast.QToastProvider, load_favourites, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
+
+        self.load_favourites = load_favourites
 
         self.toast_provider = toast_provider
 
@@ -212,6 +214,37 @@ class Sidebar(QFrame):
         add_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
         add_button.clicked.connect(lambda checked=False: self.add_pack())
 
+        manage_favourites_menu = QMenu()
+        manage_favourites_menu.setStyleSheet("""
+            QMenu {
+                background-color: #111;
+                border-radius: 6px;
+                padding: 0;
+                margin: 0;
+            }
+
+            QMenu::item {
+                color: #ccc;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+
+            QMenu::item:selected {
+                background-color: #333;
+            }
+
+            QMenu::item:pressed {
+                background-color: #444;
+            }
+
+            QMenu::separator {
+                height: 1px;
+                background: #222;
+                margin: 4px 0;
+            }
+        """)
+        manage_favourites_menu.addAction("Refresh from profile", lambda checked=False: self.body.download_favourites())
+
         favourites_button = QPushButton()
         favourites_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
         favourites_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -229,6 +262,9 @@ class Sidebar(QFrame):
                     }
         """)
         favourites_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "heart.svg"), QSize(int(30 * self.scaleFactor), int(30 * self.scaleFactor)), button_color))
+        favourites_button.clicked.connect(lambda checked=False: self.load_favourites())
+        favourites_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        favourites_button.customContextMenuRequested.connect(lambda pos: manage_favourites_menu.exec(favourites_button.mapToGlobal(pos)))
 
 
         refresh_button = QPushButton()
@@ -257,7 +293,8 @@ class Sidebar(QFrame):
         self.content_layout.addSpacing(int(5 * self.scaleFactor))
         self.content_layout.addWidget(separator)
         self.content_layout.addSpacing(int(5 * self.scaleFactor))
-        self.content_layout.addWidget(favourites_button)
+        if self.current_user.logged_in:
+            self.content_layout.addWidget(favourites_button)
         self.content_layout.addSpacing(int(2 * self.scaleFactor))
         self.content_layout.addWidget(add_button)
         self.content_layout.addSpacing(int(2 * self.scaleFactor))
@@ -269,6 +306,8 @@ class Sidebar(QFrame):
 
         def load_local_packs(packs):
             for pack in packs:
+                if pack == "favourites":
+                    continue
                 with open(os.path.join("stickers", pack, "info.json"), "r") as f:
                     info = json.loads(f.read())
                 button = QPushButton("")
