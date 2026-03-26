@@ -24,7 +24,7 @@ class Toast(QFrame):
         self.setStyleSheet(f"""
             QFrame {{
                 border-radius: 6px;
-                font-size: {9 * self.scaleFactor}px;
+                font-size: {11 * self.scaleFactor}px;
                 background-color: #333;
             }}
         """)
@@ -67,7 +67,7 @@ class Toast(QFrame):
         text_layout.addWidget(self.label)
 
         self.hover_notice = QLabel("Hover to dismiss")
-        self.hover_notice.setStyleSheet(f"font-size: {7 * self.scaleFactor}px")
+        self.hover_notice.setStyleSheet(f"font-size: {9 * self.scaleFactor}px")
         text_layout.addWidget(self.hover_notice)
         self.hover_notice.hide()
 

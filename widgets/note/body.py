@@ -73,23 +73,25 @@ class Body(QFrame):
         self.bottom_bar = QWidget(parent=self)
         self.bottom_bar.setObjectName("bottom_bar")
         self.bottom_bar.setFixedHeight(int(32 * self.scaleFactor))
-        self.bottom_bar.setStyleSheet("#bottom_bar {border-radius: 5px; background-color: #191919; border: 1px solid #333;}")
+        self.bottom_bar.setStyleSheet(
+            "#bottom_bar {border-radius: 5px; background-color: #191919; border: 1px solid #333;}")
         self.bottom_layout = QHBoxLayout(self.bottom_bar)
-        self.bottom_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.bottom_layout.setContentsMargins(int(6 * self.scaleFactor), 0, int(6 * self.scaleFactor), 0)
+        self.bottom_layout.setSpacing(int(6 * self.scaleFactor))
 
         self.add_note_button = QPushButton("Add Note")
         self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
         self.add_note_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.add_note_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.add_note_button.setFixedHeight(int(20 * self.scaleFactor))
         self.add_note_button.clicked.connect(self.add_note)
-        self.bottom_layout.addWidget(self.add_note_button)
+        self.bottom_layout.addWidget(self.add_note_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
         self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.refresh_button.setFixedSize(int(60 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.refresh_button.setFixedHeight(int(20 * self.scaleFactor))
         self.refresh_button.clicked.connect(self.get_notes)
-        self.bottom_layout.addWidget(self.refresh_button)
+        self.bottom_layout.addWidget(self.refresh_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         self.bottom_bar.setFixedWidth(self.bottom_layout.sizeHint().width())
 

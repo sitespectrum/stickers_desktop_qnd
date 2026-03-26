@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLineEdit, QTextEdit, QLabel, QHBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QWidget, QPlainTextEdit
 
 
 class EditNote(QFrame):
@@ -14,7 +14,7 @@ class EditNote(QFrame):
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.setFixedSize(int(300 * self.scaleFactor), int(200 * self.scaleFactor))
+        self.setFixedSize(int(300 * self.scaleFactor), int(237 * self.scaleFactor))
 
         self.setStyleSheet(f"""
         #edit_note, #overlay {{
@@ -88,7 +88,7 @@ class EditNote(QFrame):
         self.content_label = QLabel("<b>Content:</b>")
         self.main_layout.addWidget(self.content_label)
 
-        self.content = QTextEdit()
+        self.content = QPlainTextEdit()
         self.main_layout.addWidget(self.content)
 
         self.button_layout = QHBoxLayout()

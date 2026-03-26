@@ -79,26 +79,26 @@ class AddPack(QFrame):
         self.close_button.setIconSize(QSize(icon_px, icon_px))
 
         self.title = QLabel("Add pack")
-        self.title.setStyleSheet(f"font-size: {12 * self.scaleFactor}px; font-weight: bold;")
+        self.title.setStyleSheet(f"font-size: {14 * self.scaleFactor}px; font-weight: bold;")
 
         self.pack_name_label = QLabel("Pack name")
-        self.pack_name_label.setStyleSheet(f"font-size: {10 * self.scaleFactor}px;")
+        self.pack_name_label.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
 
         self.pack_input = QLineEdit()
         self.pack_input.setPlaceholderText("Enter pack name")
         self.pack_input.setFixedHeight(int(20 * self.scaleFactor))
-        self.pack_input.setFixedWidth(int(150 * self.scaleFactor))
+        self.pack_input.setFixedWidth(int(200 * self.scaleFactor))
 
         self.add_button = QPushButton("Add to profile")
-        self.add_button.setFixedSize(int(150 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.add_button.setFixedSize(int(200 * self.scaleFactor), int(20 * self.scaleFactor))
         self.add_button.clicked.connect(self.add_pack)
 
         self.download_and_add_button = QPushButton("Download and add to profile")
-        self.download_and_add_button.setFixedSize(int(150 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.download_and_add_button.setFixedSize(int(200 * self.scaleFactor), int(20 * self.scaleFactor))
         self.download_and_add_button.clicked.connect(self.add_and_download_pack)
 
         self.download_button = QPushButton("Download")
-        self.download_button.setFixedSize(int(150 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.download_button.setFixedSize(int(200 * self.scaleFactor), int(20 * self.scaleFactor))
         self.download_button.clicked.connect(self.download_pack)
 
         self.download_already_running_label = QLabel("Another download is already in progress")

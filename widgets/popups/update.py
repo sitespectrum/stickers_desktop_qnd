@@ -78,24 +78,24 @@ class Update(QFrame):
 
         self.check_for_update_button = QPushButton("Check for updates")
         self.check_for_update_button.clicked.connect(self.check_for_update)
-        self.check_for_update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.check_for_update_button.setFixedSize(int(130 * self.scaleFactor), int(20 * self.scaleFactor))
         self.layout.addWidget(self.check_for_update_button)
 
         self.release_notes_button = QPushButton("Release notes")
         self.release_notes_button.clicked.connect(self.open_notes)
-        self.release_notes_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.release_notes_button.setFixedSize(int(130 * self.scaleFactor), int(20 * self.scaleFactor))
         self.release_notes_button.hide()
         self.layout.addWidget(self.release_notes_button)
 
         self.update_button = QPushButton("Update")
         self.update_button.clicked.connect(self.download_update)
-        self.update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.update_button.setFixedSize(int(130 * self.scaleFactor), int(20 * self.scaleFactor))
         self.layout.addWidget(self.update_button)
         self.update_button.hide()
 
         self.restart_app = QPushButton("Restart application")
         self.restart_app.clicked.connect(self.restart)
-        self.restart_app.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.restart_app.setFixedSize(int(130 * self.scaleFactor), int(20 * self.scaleFactor))
         self.layout.addWidget(self.restart_app)
         self.restart_app.hide()
 

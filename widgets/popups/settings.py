@@ -33,39 +33,40 @@ class Settings(QFrame):
         self.update_widget.check_for_update()
 
         self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
-        self.setStyleSheet("""
-            QWidget {
+        self.setStyleSheet(f"""
+            QWidget {{
                 color: #ccc;
-            }
-            #settings {
+            }}
+            #settings {{
                 background-color: #212121;
                 border-top-left-radius: 10px;
-            }
-            #close_button {
+            }}
+            #close_button {{
                 border-radius: 5px;
                 border: none;
                 background-color: transparent;
-            }
-            #close_button:hover {
+            }}
+            #close_button:hover {{
                 background-color: #333;
-            }
-            #close_button:pressed {
+            }}
+            #close_button:pressed {{
                 background-color: #444;
-            }
-            QPushButton {
+            }}
+            QPushButton {{
                 background-color: #111;
                 border-radius: 5px;
-            }
-            QPushButton:disabled {
+                font-size: {11 * self.scaleFactor}px;
+            }}
+            QPushButton:disabled {{
                 background-color: #444;
                 border-radius: 5px;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background-color: #333;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: #444;
-            }
+            }}
         """)
 
         self.setVisible(False)
@@ -92,11 +93,11 @@ class Settings(QFrame):
         self.user_label.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
 
         self.login_button = QPushButton("Login")
-        self.login_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.login_button.setFixedSize(int(120 * self.scaleFactor), int(20 * self.scaleFactor))
         self.login_button.clicked.connect(self.start_login)
 
         self.update_button = QPushButton("Update application")
-        self.update_button.setFixedSize(int(100 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.update_button.setFixedSize(int(120 * self.scaleFactor), int(20 * self.scaleFactor))
         self.update_button.clicked.connect(self.update_widget.open)
 
         self.title = QLabel("Settings")

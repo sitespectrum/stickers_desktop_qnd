@@ -14,7 +14,7 @@ class EditBookmark(QFrame):
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
 
-        self.setFixedSize(int(300 * self.scaleFactor), int(100 * self.scaleFactor))
+        self.setFixedSize(int(300 * self.scaleFactor), int(150 * self.scaleFactor))
 
         self.setStyleSheet(f"""
         #edit_bookmark, #overlay {{

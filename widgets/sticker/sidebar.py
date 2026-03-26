@@ -396,7 +396,7 @@ class Sidebar(QFrame):
                             lambda pos, btn=button, pack=pack["name"]: self.pack_context_menu_requested(pos, btn, pack)
                         )
                     if os.path.exists("stickers"):
-                        local_packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])]]
+                        local_packs = [i for i in os.listdir("stickers") if i not in [i["name"] for i in payload.get("packs", [])] and i != "favourites"]
                         if local_packs:
                             separator = QWidget()
                             separator.setFixedHeight(int(1 * self.scaleFactor))

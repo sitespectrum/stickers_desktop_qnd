@@ -174,29 +174,30 @@ class MainWindow(QMainWindow):
 
         self.setFont(scaled_font)
 
-        self.setStyleSheet("""
-            #central_widget {
+        self.setStyleSheet(f"""
+            #central_widget {{
                 background-color: #212121;
                 border-top-left-radius: 10px;
-            }
-            QWidget {
+            }}
+            QWidget {{
                 color: #ccc;
-            }
-             QPushButton {
+            }}
+             QPushButton {{
                 background-color: #111;
                 border-radius: 5px;
-            }
-            QPushButton:disabled {
+                font-size: {12 * self.scaleFactor}px;
+            }}
+            QPushButton:disabled {{
                 background-color: #444;
                 border-radius: 5px;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background-color: #333;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: #444;
-            }
-            QProgressBar {
+            }}
+            QProgressBar {{
                 padding: 3px;
                 background-color: #111;
                 border-top: 1px solid #333;
@@ -207,13 +208,13 @@ class MainWindow(QMainWindow):
                 text-align: center;
                 color: transparent;
                 height: 30px;
-            }
-            QProgressBar::chunk {
+            }}
+            QProgressBar::chunk {{
                 background-color: #333;
                 border-radius: 2px;
                 margin: 0.5px;
-            }
-            QLineEdit {
+            }}
+            QLineEdit {{
                 background-color: transparent;
                 border: 1px solid #444;
                 border-top-color: transparent;
@@ -222,11 +223,11 @@ class MainWindow(QMainWindow):
                 color: #999999;
                 height: 30px;
                 padding-left: 1px;
-            }
-            QLineEdit:focus {
+            }}
+            QLineEdit:focus {{
                 border: 1px solid #444;
-            }
-            QTextEdit {
+            }}
+            QPlainTextEdit {{
                 background-color: transparent;
                 border: 1px solid #444;
                 border-top-color: transparent;
@@ -235,10 +236,10 @@ class MainWindow(QMainWindow):
                 color: #999999;
                 height: 30px;
                 padding-left: 1px;
-            }
-            QTextEdit:focus {
+            }}
+            QPlainTextEdit:focus {{
                 border-color: #444;
-            }
+            }}
         """)
 
         self.settings_widget = settings.Settings(self.toast_provider, restart_with_new_binary, parent=self.central_widget)
