@@ -89,6 +89,7 @@ class Body(QFrame):
         self.add_bookmark_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_bookmark_button.clicked.connect(self.add_bookmark)
         self.add_bookmark_button.setFixedHeight(int(20 * self.scaleFactor))
+        self.add_bookmark_button.setFixedWidth(int(100 * self.scaleFactor))
 
         self.bottom_layout.addWidget(self.add_bookmark_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 

@@ -83,6 +83,7 @@ class Body(QFrame):
         self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
         self.add_note_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_note_button.setFixedHeight(int(20 * self.scaleFactor))
+        self.add_note_button.setFixedWidth(int(100 * self.scaleFactor))
         self.add_note_button.clicked.connect(self.add_note)
         self.bottom_layout.addWidget(self.add_note_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 
