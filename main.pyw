@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
              QPushButton {{
                 background-color: #111;
                 border-radius: 5px;
-                font-size: {12 * self.scaleFactor}px;
+                font-size: {11 * self.scaleFactor}px;
             }}
             QPushButton:disabled {{
                 background-color: #444;
