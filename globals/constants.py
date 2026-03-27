@@ -1,5 +1,6 @@
 VERSION = "1.0.0"
 SERVER = "http://localhost"
+FRONTEND = SERVER
 GITHUB_API = "https://api.github.com/repos/sitespectrum/stickers_desktop_qnd/releases/latest"
 DOWNLOAD_THREAD_LIMIT = 5
 CONTENT_TYPE_TO_EXT = {

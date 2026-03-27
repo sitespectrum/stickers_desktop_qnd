@@ -4,6 +4,8 @@ from urllib.parse import urlparse, parse_qs
 
 from PySide6.QtCore import QThread, Signal
 
+from globals.constants import FRONTEND
+
 
 class OAuthHandler(http.server.BaseHTTPRequestHandler):
     code = None
@@ -12,7 +14,7 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     ABORT_CODE = "__OAUTH_ABORT__"
 
     def _send_cors_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "http://localhost")
+        self.send_header("Access-Control-Allow-Origin", FRONTEND)
         self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -90,7 +92,7 @@ class OAuthServerThread(QThread):
 
     def run(self):
         port = get_free_port()
-        redirect_uri = f"http://127.0.0.1:{port}/callback"
+        redirect_uri = f"http://localhost:{port}/callback"
 
         # noinspection PyTypeChecker
         self.server = http.server.HTTPServer(("127.0.0.1", port), OAuthHandler)

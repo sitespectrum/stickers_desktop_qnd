@@ -99,6 +99,7 @@ class Body(QFrame):
                                                 QColor("#999")))
         self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.refresh_button.setFixedHeight(int(20 * self.scaleFactor))
+        self.refresh_button.setFixedWidth(int(60 * self.scaleFactor))
         self.refresh_button.clicked.connect(self.get_bookmarks)
         self.bottom_layout.addWidget(self.refresh_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 

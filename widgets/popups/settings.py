@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 
 from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
-from globals.constants import SERVER
+from globals.constants import SERVER, FRONTEND
 from widgets import toast
 from widgets.popups import update
 
@@ -173,11 +173,11 @@ class Settings(QFrame):
         r.finished.connect(req_finished)
 
     def on_server_ready(self, redirect_uri):
-        webbrowser.open(f"{SERVER}/login?send_to={redirect_uri}&challenge={self.challenge}")
+        webbrowser.open(f"{FRONTEND}/login?send_to={redirect_uri}&challenge={self.challenge}")
 
     def on_code_received(self, code: str):
-        self.server_running = True
-        self.start_login()
+        if self.server_running:
+            self.start_login()
 
         if code == handle_oauth_login.OAuthHandler.ABORT_CODE:
             return

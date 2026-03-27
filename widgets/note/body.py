@@ -91,6 +91,7 @@ class Body(QFrame):
         self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
         self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.refresh_button.setFixedHeight(int(20 * self.scaleFactor))
+        self.refresh_button.setFixedWidth(int(60 * self.scaleFactor))
         self.refresh_button.clicked.connect(self.get_notes)
         self.bottom_layout.addWidget(self.refresh_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 

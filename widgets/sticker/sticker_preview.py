@@ -7,6 +7,7 @@ from PySide6.QtGui import QIcon, QGuiApplication, QColor
 from PySide6.QtWidgets import QFrame, QGraphicsOpacityEffect, QPushButton, QVBoxLayout, QLabel, QHBoxLayout
 
 from globals.constants import SERVER
+from globals.user import user
 from modules import request_helpers
 from modules.ui_helpers import svg_to_icon
 
@@ -18,6 +19,8 @@ class PreviewSticker(QFrame):
         self.sticker_favourites_name = None
         self.sticker_original_name = None
         self.sticker_pack_name = None
+
+        self.current_user = user
 
         self.primary_screen = QGuiApplication.primaryScreen()
         self.scaleFactor = self.primary_screen.devicePixelRatio()
@@ -185,6 +188,10 @@ class PreviewSticker(QFrame):
         else:
             self.remove_from_favourites_button.setVisible(False)
             self.add_to_favourites_button.setVisible(True)
+
+        if not self.current_user.logged_in:
+            self.remove_from_favourites_button.setVisible(False)
+            self.add_to_favourites_button.setVisible(False)
 
         self.sticker_original_name = sticker_name
         self.sticker_pack_name = pack
