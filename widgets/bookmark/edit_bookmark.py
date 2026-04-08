@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLineEdit, QLabel, QHBoxLayout, QWidget
+
+from modules import ui_helpers
 
 
 class EditBookmark(QFrame):
@@ -11,8 +12,7 @@ class EditBookmark(QFrame):
 
         self.bookmark_id = None
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setStyleSheet(f"""
         #edit_bookmark, #overlay {{
@@ -127,4 +127,3 @@ class EditBookmark(QFrame):
 
     def end_loading(self):
         self.overlay.hide()
-

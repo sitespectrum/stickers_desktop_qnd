@@ -5,17 +5,15 @@ import webbrowser
 from json import JSONDecodeError
 
 import bs4
-import requests
-from url_normalize import url_normalize
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QGuiApplication, QColor
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QScrollArea, QGraphicsBlurEffect, \
     QGraphicsOpacityEffect, QWidget, QHBoxLayout
+from url_normalize import url_normalize
 
 from globals.constants import SERVER
-from modules import request_helpers
-
 from globals.user import user
+from modules import request_helpers, ui_helpers
 from modules.request_helpers import make_request
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
@@ -34,7 +32,9 @@ def _clear_layout(layout=None):
 
 
 class Body(QFrame):
-    def __init__(self, edit_bookmark_widget: edit_bookmark.EditBookmark, confirm_delete_bookmark: confirm_delete_bookmark.ConfirmDeleteBookmark, toast_provider: toast.QToastProvider, parent=None):
+    def __init__(self, edit_bookmark_widget: edit_bookmark.EditBookmark,
+                 confirm_delete_bookmark: confirm_delete_bookmark.ConfirmDeleteBookmark,
+                 toast_provider: toast.QToastProvider, parent=None):
         super().__init__(parent)
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -42,8 +42,7 @@ class Body(QFrame):
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_bookmarks)
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -234,7 +233,9 @@ class Body(QFrame):
         self.edit_bookmark.show()
         self.edit_bookmark.loading()
         if self.current_user.logged_in:
-            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}", "DELETE")
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/delete/{self.edit_bookmark.bookmark_id}",
+                                             "DELETE")
+
             def req_finished():
                 self.edit_bookmark.end_loading()
                 if r.error() == r.NetworkError.NoError:
@@ -251,6 +252,7 @@ class Body(QFrame):
                             return
                     except JSONDecodeError:
                         self.toast_provider.show_toast("Failed to delete bookmark.", variant="error")
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "bookmarks.json")):
@@ -264,7 +266,6 @@ class Body(QFrame):
             self.toast_provider.show_toast("Bookmark deleted successfully.", variant="success")
             self.get_bookmarks()
 
-
     def save_bookmark(self):
         if self.edit_bookmark.bookmark_id is None:
             return
@@ -273,10 +274,12 @@ class Body(QFrame):
             return
         self.edit_bookmark.loading()
         if self.current_user.logged_in:
-            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "PUT", json_data={
-                "name": self.edit_bookmark.title.text(),
-                "url": self.edit_bookmark.url.text().strip()
-            })
+            r = request_helpers.make_request(f"{SERVER}/api/bookmarks/save/{self.edit_bookmark.bookmark_id}", "PUT",
+                                             json_data={
+                                                 "name": self.edit_bookmark.title.text(),
+                                                 "url": self.edit_bookmark.url.text().strip()
+                                             })
+
             def req_finished():
                 self.edit_bookmark.end_loading()
                 if r.error() == r.NetworkError.NoError:
@@ -294,6 +297,7 @@ class Body(QFrame):
                     except JSONDecodeError:
                         self.toast_provider.show_toast("Failed to save bookmark.", variant="error")
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "bookmarks.json")):
@@ -314,6 +318,7 @@ class Body(QFrame):
             url = url_normalize(self.edit_bookmark.url.text().strip(), default_scheme="https")
             if not name:
                 r = make_request(url)
+
                 def req_finished():
                     if r.error() == r.NetworkError.NoError:
                         name = bs4.BeautifulSoup(str(r.readAll()), "html.parser").title.text.strip()
@@ -326,6 +331,7 @@ class Body(QFrame):
                     self.close_bookmark()
                     self.get_bookmarks()
                     r.deleteLater()
+
                 r.finished.connect(req_finished)
             else:
                 bookmark["name"] = name
@@ -335,13 +341,13 @@ class Body(QFrame):
                 self.close_bookmark()
                 self.get_bookmarks()
 
-
     def get_bookmark_details(self, bookmark_id: str):
         self.open_bookmark()
         self.edit_bookmark.bookmark_id = bookmark_id
         self.edit_bookmark.loading()
         if self.current_user.logged_in:
             r = request_helpers.make_request(f"{SERVER}/api/bookmarks/get/{bookmark_id}")
+
             def req_finished():
                 if r.error() == r.NetworkError.NoError:
                     bookmark = json.loads(bytes(r.readAll()))["bookmark"]
@@ -350,6 +356,7 @@ class Body(QFrame):
                     self.edit_bookmark.note_id = bookmark_id
                     self.edit_bookmark.end_loading()
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "bookmarks.json")):
@@ -404,8 +411,10 @@ class Body(QFrame):
                         """)
                         self.scroll_layout.addWidget(button)
                         button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-                        button.customContextMenuRequested.connect(lambda checked=False, bookmark_id=i["id"]: self.get_bookmark_details(bookmark_id))
-                        button.clicked.connect(lambda checked=False, bookmark_url=i["url"]: self.open_bookmark_url(bookmark_url))
+                        button.customContextMenuRequested.connect(
+                            lambda checked=False, bookmark_id=i["id"]: self.get_bookmark_details(bookmark_id))
+                        button.clicked.connect(
+                            lambda checked=False, bookmark_url=i["url"]: self.open_bookmark_url(bookmark_url))
                 r.deleteLater()
 
             r.finished.connect(req_finished)
@@ -439,13 +448,14 @@ class Body(QFrame):
                 """)
                 self.scroll_layout.addWidget(button)
                 button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-                button.customContextMenuRequested.connect(lambda checked=False, bookmark_id=i: self.get_bookmark_details(bookmark_id))
-                button.clicked.connect(lambda checked=False, bookmark_url=bookmarks[i]["url"]: self.open_bookmark_url(bookmark_url))
+                button.customContextMenuRequested.connect(
+                    lambda checked=False, bookmark_id=i: self.get_bookmark_details(bookmark_id))
+                button.clicked.connect(
+                    lambda checked=False, bookmark_url=bookmarks[i]["url"]: self.open_bookmark_url(bookmark_url))
             if not bookmarks:
                 label = QLabel("No local bookmarks")
                 label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
                 self.scroll_layout.addWidget(label)
-
 
     def align_to_center(self, child=None, ):
         child = child

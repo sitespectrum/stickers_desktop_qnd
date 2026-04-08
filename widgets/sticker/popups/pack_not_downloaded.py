@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton
+
+from modules import ui_helpers
 
 
 class PackNotDownloaded(QFrame):
@@ -8,8 +9,7 @@ class PackNotDownloaded(QFrame):
         super().__init__(parent)
         self.setObjectName("pack_not_downloaded")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setFixedSize(int(250 * self.scaleFactor), int(70 * self.scaleFactor))
         self.setContentsMargins(0, 0, 0, 0)

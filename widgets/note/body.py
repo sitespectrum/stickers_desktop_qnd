@@ -1,18 +1,16 @@
 import json
 import os
-import time
 import uuid
 from json import JSONDecodeError
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QGuiApplication, QColor
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QScrollArea, QGraphicsBlurEffect, \
     QGraphicsOpacityEffect, QWidget, QHBoxLayout
 
 from globals.constants import SERVER
-from modules import request_helpers
-
 from globals.user import user
+from modules import request_helpers, ui_helpers
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
 from widgets.note import edit_note, confirm_delete_note
@@ -30,7 +28,9 @@ def _clear_layout(layout=None):
 
 
 class Body(QFrame):
-    def __init__(self, edit_note_widget: edit_note.EditNote, confirm_delete_widget: confirm_delete_note.ConfirmDeleteNote, toast_provider: toast.QToastProvider, parent=None):
+    def __init__(self, edit_note_widget: edit_note.EditNote,
+                 confirm_delete_widget: confirm_delete_note.ConfirmDeleteNote, toast_provider: toast.QToastProvider,
+                 parent=None):
         super().__init__(parent)
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -38,8 +38,7 @@ class Body(QFrame):
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_notes)
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -80,7 +79,9 @@ class Body(QFrame):
         self.bottom_layout.setSpacing(int(6 * self.scaleFactor))
 
         self.add_note_button = QPushButton("Add Note")
-        self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
+        self.add_note_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "plus.svg"),
+                                                 QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)),
+                                                 QColor("#999")))
         self.add_note_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_note_button.setFixedHeight(int(20 * self.scaleFactor))
         self.add_note_button.setFixedWidth(int(100 * self.scaleFactor))
@@ -88,7 +89,9 @@ class Body(QFrame):
         self.bottom_layout.addWidget(self.add_note_button, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"), QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)), QColor("#999")))
+        self.refresh_button.setIcon(svg_to_icon(os.path.join("utils", "ui", "refresh.svg"),
+                                                QSize(int(20 * self.scaleFactor), int(20 * self.scaleFactor)),
+                                                QColor("#999")))
         self.refresh_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.refresh_button.setFixedHeight(int(20 * self.scaleFactor))
         self.refresh_button.setFixedWidth(int(60 * self.scaleFactor))
@@ -223,6 +226,7 @@ class Body(QFrame):
         self.edit_note.loading()
         if self.current_user.logged_in:
             r = request_helpers.make_request(f"{SERVER}/api/notes/delete/{self.edit_note.note_id}", "DELETE")
+
             def req_finished():
                 self.edit_note.end_loading()
                 if r.error() == r.NetworkError.NoError:
@@ -239,6 +243,7 @@ class Body(QFrame):
                             return
                     except JSONDecodeError:
                         self.toast_provider.show_toast("Failed to delete note.", variant="error")
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "notes.json")):
@@ -264,6 +269,7 @@ class Body(QFrame):
                 "name": self.edit_note.title.text(),
                 "content": self.edit_note.content.toPlainText()
             })
+
             def req_finished():
                 self.edit_note.end_loading()
                 if r.error() == r.NetworkError.NoError:
@@ -281,6 +287,7 @@ class Body(QFrame):
                     except JSONDecodeError:
                         self.toast_provider.show_toast("Failed to save note.", variant="error")
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "notes.json")):
@@ -310,6 +317,7 @@ class Body(QFrame):
         self.edit_note.loading()
         if self.current_user.logged_in:
             r = request_helpers.make_request(f"{SERVER}/api/notes/get/{note_id}")
+
             def req_finished():
                 if r.error() == r.NetworkError.NoError:
                     note = json.loads(bytes(r.readAll()))["note"]
@@ -318,6 +326,7 @@ class Body(QFrame):
                     self.edit_note.note_id = note_id
                     self.edit_note.end_loading()
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "notes.json")):
@@ -340,6 +349,7 @@ class Body(QFrame):
             label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
             self.scroll_layout.addWidget(label)
             r = request_helpers.make_request(f"{SERVER}/api/notes/all")
+
             def req_finished():
                 _clear_layout(self.scroll_layout)
                 if r.error() == r.NetworkError.NoError:
@@ -372,6 +382,7 @@ class Body(QFrame):
                         self.scroll_layout.addWidget(button)
                         button.clicked.connect(lambda checked=False, note_id=i["id"]: self.get_note_details(note_id))
                 r.deleteLater()
+
             r.finished.connect(req_finished)
         else:
             if not os.path.exists(os.path.join("data", "notes.json")):
@@ -408,7 +419,7 @@ class Body(QFrame):
                 label.setStyleSheet(f"color: #999; font-size: {int(12 * self.scaleFactor)}px")
                 self.scroll_layout.addWidget(label)
 
-    def align_to_center(self, child=None,):
+    def align_to_center(self, child=None, ):
         child = child
         x = (self.width() - child.width()) // 2
         y = (self.height() - child.height()) // 2
@@ -418,4 +429,5 @@ class Body(QFrame):
         self.align_to_center(self.edit_note)
         self.align_to_center(self.confirm_delete_widget)
 
-        self.bottom_bar.move(int(10 * self.scaleFactor), self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))
+        self.bottom_bar.move(int(10 * self.scaleFactor),
+                             self.height() - self.bottom_bar.height() - int(10 * self.scaleFactor))

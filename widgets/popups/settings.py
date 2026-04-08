@@ -4,18 +4,18 @@ import uuid
 import webbrowser
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor, QGuiApplication
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
 
-from modules import ui_helpers, handle_oauth_login, request_helpers
 from globals import user
 from globals.constants import SERVER, FRONTEND
+from modules import ui_helpers, handle_oauth_login, request_helpers
 from widgets import toast
 from widgets.popups import update
 
 
 class Settings(QFrame):
-    def __init__(self,toast_provider: toast.QToastProvider, restart, parent=None):
+    def __init__(self, toast_provider: toast.QToastProvider, restart, parent=None):
         super().__init__(parent)
         self.current_user = user.user
         self.current_user.logged_inChanged.connect(self.set_user)
@@ -26,8 +26,7 @@ class Settings(QFrame):
 
         self.toast_provider = toast_provider
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.update_widget = update.Update(self.toast_provider, self.restart, parent=self)
         self.update_widget.check_for_update()
@@ -122,7 +121,8 @@ class Settings(QFrame):
 
     def set_user(self, logged_in: bool = False):
         if logged_in:
-            self.user_label.setText(f"Logged in as <b>{"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}</b>")
+            self.user_label.setText(
+                f"Logged in as <b>{"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}</b>")
             try:
                 self.login_button.clicked.disconnect()
             except RuntimeWarning:
@@ -165,7 +165,8 @@ class Settings(QFrame):
                 self.current_user.logged_in = True
             elif r.error() == r.NetworkError.ConnectionRefusedError:
                 self.current_user.logged_in = False
-                self.toast_provider.show_toast("Failed to connect to server. Continuing in offline mode", variant="error", timeout=5000)
+                self.toast_provider.show_toast("Failed to connect to server. Continuing in offline mode",
+                                               variant="error", timeout=5000)
             else:
                 self.current_user.logged_in = False
             r.deleteLater()

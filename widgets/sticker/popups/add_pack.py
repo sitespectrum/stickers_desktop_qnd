@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QGuiApplication, QColor
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton, QLineEdit
 
 from globals.user import user
@@ -8,7 +8,7 @@ from widgets.sticker import sidebar, body
 
 
 class AddPack(QFrame):
-    def __init__(self, parent=None, body_widget: body.Body=None):
+    def __init__(self, parent=None, body_widget: body.Body = None):
         super().__init__(parent)
         self.server_running = False
         self.setObjectName("add_pack")
@@ -20,8 +20,7 @@ class AddPack(QFrame):
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.update_buttons)
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setFixedSize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setStyleSheet("""

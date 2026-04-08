@@ -3,12 +3,12 @@ import json
 import os
 
 from PySide6.QtCore import Qt, QSize, QPoint
-from PySide6.QtGui import QIcon, QPixmap, QGuiApplication, QColor
+from PySide6.QtGui import QIcon, QPixmap, QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QWidget, QScrollArea, QMenu
 
 from globals.user import user
 from globals.constants import SERVER
-from modules import request_helpers
+from modules import request_helpers, ui_helpers
 from modules.ui_helpers import svg_to_icon
 from widgets import toast
 
@@ -21,8 +21,7 @@ class Sidebar(QFrame):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.load_favourites = load_favourites
 

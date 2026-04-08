@@ -1,6 +1,7 @@
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QColor, QIcon, QPixmap, Qt, QPainter
 from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtWidgets import QApplication
 
 
 def svg_to_icon(svg_path: str, size: QSize, tint: QColor | None = None) -> QIcon:
@@ -17,3 +18,7 @@ def svg_to_icon(svg_path: str, size: QSize, tint: QColor | None = None) -> QIcon
 
     p.end()
     return QIcon(pm)
+
+
+def get_screen_scale():
+    return QApplication.primaryScreen().devicePixelRatio()

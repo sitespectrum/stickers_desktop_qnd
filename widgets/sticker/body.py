@@ -3,17 +3,16 @@ import os
 import shutil
 
 from PySide6.QtCore import Qt, QSize, QTimer, QPoint, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QScrollArea, QWidget, \
     QApplication, QGraphicsBlurEffect
 
 from caches.sticker_icon_cache import StickerIconCache
 from globals.constants import SERVER
 from globals.user import user
+from modules import download_pack, request_helpers, clipboard, ui_helpers
 from widgets import toast
 from widgets.sticker import sticker_preview
 from widgets.sticker.popups import download_failed, pack_not_downloaded
-from modules import download_pack, request_helpers, clipboard
 
 
 def get_rel_pos(widget, parent, main_window):
@@ -42,8 +41,7 @@ class Body(QFrame):
 
         self.setObjectName("body")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.icon_cache = StickerIconCache(max_size=500)
 
@@ -184,7 +182,8 @@ class Body(QFrame):
     def preview_sticker(self, pos: QPoint, button: QPushButton, pack: str, sticker: str):
         self.preview_open = True
         self.blur_in_effect.start()
-        self.preview_sticker_widget.show_preview(button.icon(), pack, sticker, start_pos=get_rel_pos(button, self.scroll_area, self))
+        self.preview_sticker_widget.show_preview(button.icon(), pack, sticker,
+                                                 start_pos=get_rel_pos(button, self.scroll_area, self))
         self.toast_provider.raise_()
 
     def copy_sticker(self, pack: str, sticker: str):
@@ -226,8 +225,10 @@ class Body(QFrame):
             if not os.path.exists(os.path.join("stickers")):
                 os.mkdir(os.path.join("stickers"))
 
-            r = request_helpers.make_request((f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true"))
+            r = request_helpers.make_request((
+                                                 f"{SERVER}/api/stickers/get_pack/{pack}" if not add else f"{SERVER}/api/stickers/get_pack/{pack}?add=true"))
             os.mkdir(os.path.join("stickers", pack))
+
             def create_sticker_into():
                 if r.error() != r.NetworkError.NoError:
                     self.toast_provider.show_toast("Unable to download", variant="error")
@@ -241,6 +242,7 @@ class Body(QFrame):
                 payload = json.loads(data.decode("utf-8")) if data else {}
                 with open(os.path.join("stickers", pack, "info.json"), "w") as f:
                     f.write(json.dumps(payload, indent=4))
+
             r.finished.connect(create_sticker_into)
             self.downloader.pack_downloaded.disconnect()
             if not no_switch:
@@ -330,7 +332,8 @@ class Body(QFrame):
             button.setIconSize(QSize(int(45 * self.scaleFactor), int(45 * self.scaleFactor)))
             button.clicked.connect(lambda checked=False, pack=sticker_pack, file=file: self.copy_sticker(pack, file))
             button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            button.customContextMenuRequested.connect(lambda pos, button=button, pack=sticker_pack, file=file: self.preview_sticker(pos, button, pack, file))
+            button.customContextMenuRequested.connect(
+                lambda pos, button=button, pack=sticker_pack, file=file: self.preview_sticker(pos, button, pack, file))
             self.layout.addWidget(button, row, col)
 
             col += 1

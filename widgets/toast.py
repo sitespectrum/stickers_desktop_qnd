@@ -1,9 +1,10 @@
 import os
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QSize
-from PySide6.QtGui import QGuiApplication, QRegion, QIcon, QColor
+from PySide6.QtGui import QRegion, QIcon, QColor
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout, QMainWindow
 
+from modules import ui_helpers
 from modules.ui_helpers import svg_to_icon
 
 
@@ -16,8 +17,7 @@ class Toast(QFrame):
         self.setMouseTracking(True)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setFixedWidth(int(200 * self.scaleFactor))
 
@@ -107,7 +107,7 @@ class Toast(QFrame):
 
 
 class QToastProvider(QFrame):
-    def __init__(self, parent: QMainWindow=None):
+    def __init__(self, parent: QMainWindow = None):
         super().__init__(parent)
 
         self.setObjectName("toast_holder")

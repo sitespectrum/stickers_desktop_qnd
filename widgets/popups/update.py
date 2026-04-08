@@ -5,7 +5,7 @@ import webbrowser
 from zipfile import ZipFile
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor, QGuiApplication
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar
 
 from globals.constants import VERSION, GITHUB_API
@@ -14,14 +14,13 @@ from widgets import toast
 
 
 class Update(QFrame):
-    def __init__(self,toast_provider: toast.QToastProvider, restart, parent=None):
+    def __init__(self, toast_provider: toast.QToastProvider, restart, parent=None):
         super().__init__(parent)
         self.setObjectName("update")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.restart = restart
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.release_notes_url = ""
         self.update_package_url = ""
@@ -41,9 +40,6 @@ class Update(QFrame):
         self.latest_version = None
 
         self.toast_provider = toast_provider
-
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
 
         self.top_bar = QHBoxLayout()
         self.top_bar.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -99,7 +95,8 @@ class Update(QFrame):
         self.layout.addWidget(self.restart_app)
         self.restart_app.hide()
 
-        self.update_notice = QLabel("Application successfully updated. Changes will take effect after restarting the application.")
+        self.update_notice = QLabel(
+            "Application successfully updated. Changes will take effect after restarting the application.")
         self.update_notice.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
         self.update_notice.setWordWrap(True)
         self.layout.addWidget(self.update_notice)
@@ -160,7 +157,8 @@ class Update(QFrame):
         shutil.rmtree("_temp")
         self.update_running = False
         self.progress_bar.hide()
-        self.toast_provider.show_toast("Update complete. Please restart the application to apply the changes.", variant="success", timeout=0)
+        self.toast_provider.show_toast("Update complete. Please restart the application to apply the changes.",
+                                       variant="success", timeout=0)
 
     def download_update(self):
         if self.update_running:
@@ -211,6 +209,7 @@ class Update(QFrame):
         )
         self.check_for_update_button.setText("Checking for updates...")
         self.check_for_update_button.setDisabled(True)
+
         def on_req_success():
             self.check_for_update_button.setText("Check for updates")
             self.check_for_update_button.setDisabled(False)
@@ -225,7 +224,8 @@ class Update(QFrame):
                     self.update_button.show()
                     self.check_for_update_button.hide()
                     self.release_notes_url = body.get("html_url")
-                    self.toast_provider.show_toast("An update is available.", timeout=0 if not self.isVisible() else 3000, variant="info")
+                    self.toast_provider.show_toast("An update is available.",
+                                                   timeout=0 if not self.isVisible() else 3000, variant="info")
                     for i in body.get("assets", []):
                         if i.get("content_type") == "application/x-zip-compressed":
                             self.update_package_url = i.get("browser_download_url")
@@ -241,10 +241,12 @@ class Update(QFrame):
                 self.toast_provider.show_toast("Failed to check for updates.", variant="error")
 
             r.deleteLater()
+
         r.finished.connect(on_req_success)
 
     def resizeEvent(self, event):
-        self.progress_bar.move((self.width() // 2) - (self.progress_bar.width() // 2), self.height() - self.progress_bar.height())
+        self.progress_bar.move((self.width() // 2) - (self.progress_bar.width() // 2),
+                               self.height() - self.progress_bar.height())
 
     def open(self):
         self.show()

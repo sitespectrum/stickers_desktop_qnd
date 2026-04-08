@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLineEdit, QTextEdit, QLabel, QHBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLabel, QHBoxLayout
+
+from modules import ui_helpers
 
 
 class ConfirmDeleteNote(QFrame):
@@ -9,8 +10,7 @@ class ConfirmDeleteNote(QFrame):
         self.setObjectName("confirm_delete_note")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setFixedSize(int(300 * self.scaleFactor), int(80 * self.scaleFactor))
 

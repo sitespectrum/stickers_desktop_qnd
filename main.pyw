@@ -4,25 +4,26 @@ import sys
 import time
 import traceback
 
-from PySide6.QtGui import QIcon, Qt, QGuiApplication, QFont
+from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve, QSize
+from PySide6.QtGui import QIcon, Qt, QFont, QGuiApplication
 from PySide6.QtWidgets import QMainWindow, QApplication, QSystemTrayIcon, QWidget, QVBoxLayout, QHBoxLayout, \
     QMessageBox, QStackedWidget, QGraphicsOpacityEffect, QLabel
-from PySide6.QtCore import QEvent, QPoint, QPropertyAnimation, QEasingCurve, QSize
 
+from modules import ui_helpers
 from modules.ui_helpers import svg_to_icon
 from widgets import title_bar, tray_menu, toast, menu
 from widgets.bookmark import body as bookmark_body, edit_bookmark, confirm_delete_bookmark
-from widgets.sticker import sidebar, body
-from widgets.popups import settings
-from widgets.sticker.popups import add_pack
 from widgets.note import body as note_body, edit_note, confirm_delete_note
+from widgets.popups import settings
+from widgets.sticker import sidebar, body
+from widgets.sticker.popups import add_pack
 
 
 def format_exception(exctype, value, traceback_obj):
-
     exception_str = '\n' + ''.join(traceback.format_exception(exctype, value, traceback_obj))
 
     return exception_str
+
 
 def exception_hook(exctype, value, traceback_obj):
     time_stamp = time.time()
@@ -34,10 +35,10 @@ def exception_hook(exctype, value, traceback_obj):
         f.write(exception_str)
 
     QMessageBox.critical(None, "Æther Desktop | Error", f"<p>An unexpected error occurred<br>"
-                                        f"<pre>{str(exctype.__name__)}</pre><br>"
-                                        f"The application will quit. Please contact support.<br>"
-                                        f"A detailed error message has been saved here: <br>"
-                                        f"<pre><code>{os.path.abspath(f'reports/{time_stamp}.txt')}</code></pre></p>")
+                                                        f"<pre>{str(exctype.__name__)}</pre><br>"
+                                                        f"The application will quit. Please contact support.<br>"
+                                                        f"A detailed error message has been saved here: <br>"
+                                                        f"<pre><code>{os.path.abspath(f'reports/{time_stamp}.txt')}</code></pre></p>")
 
     sys.__excepthook__(exctype, value, traceback_obj)
     app.quit()
@@ -48,6 +49,7 @@ def restart_with_new_binary():
     subprocess.Popen([new_exe])
     time.sleep(0.2)
     QApplication.quit()
+
 
 class MainWindow(QMainWindow):
 
@@ -60,7 +62,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
 
         self.screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
         self.resize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setFixedSize(self.size())
 
@@ -119,7 +121,8 @@ class MainWindow(QMainWindow):
         self.add_pack_widget = add_pack.AddPack(parent=self.stacked_widget, body_widget=self.stickers_widget)
         self.add_pack_widget.resize(self.height() - self.title_bar.height(), self.width())
 
-        self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, self.stickers_widget.load_favourites, body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
+        self.stickers_sidebar = sidebar.Sidebar(self.toast_provider, self.stickers_widget.load_favourites,
+                                                body_widget=self.stickers_widget, add_pack_widget=self.add_pack_widget)
         self.stickers_layout.addWidget(self.stickers_sidebar)
 
         self.add_pack_widget.sidebar_widget = self.stickers_sidebar
@@ -135,7 +138,8 @@ class MainWindow(QMainWindow):
         self.notes_frame.setObjectName("notes_frame")
         self.notes_layout = QVBoxLayout()
         notes_title = QLabel("Notes")
-        notes_title.setStyleSheet(f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
+        notes_title.setStyleSheet(
+            f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
         self.notes_layout.addWidget(notes_title)
         self.notes_layout.setContentsMargins(0, 0, 0, 0)
         self.notes_frame.setLayout(self.notes_layout)
@@ -153,14 +157,16 @@ class MainWindow(QMainWindow):
         self.bookmarks_frame.setObjectName("bookmarks_frame")
         self.bookmarks_layout = QVBoxLayout()
         bookmarks_title = QLabel("Bookmarks")
-        bookmarks_title.setStyleSheet(f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
+        bookmarks_title.setStyleSheet(
+            f"padding-left: {int(5 * self.scaleFactor)}px; font-size: {int(12 * self.scaleFactor)}px")
         self.bookmarks_layout.addWidget(bookmarks_title)
         self.bookmarks_layout.setContentsMargins(0, 0, 0, 0)
         self.bookmarks_frame.setLayout(self.bookmarks_layout)
 
         self.confirm_delete_bookmark = confirm_delete_bookmark.ConfirmDeleteBookmark(parent=self.stacked_widget)
         self.edit_bookmark_widget = edit_bookmark.EditBookmark(parent=self.stacked_widget)
-        self.bookmarks_widget = bookmark_body.Body(self.edit_bookmark_widget, self.confirm_delete_bookmark, self.toast_provider)
+        self.bookmarks_widget = bookmark_body.Body(self.edit_bookmark_widget, self.confirm_delete_bookmark,
+                                                   self.toast_provider)
 
         self.bookmarks_layout.addWidget(self.bookmarks_widget)
 
@@ -242,7 +248,8 @@ class MainWindow(QMainWindow):
             }}
         """)
 
-        self.settings_widget = settings.Settings(self.toast_provider, restart_with_new_binary, parent=self.central_widget)
+        self.settings_widget = settings.Settings(self.toast_provider, restart_with_new_binary,
+                                                 parent=self.central_widget)
 
         self.overlay = QWidget(self.central_widget)
         self.overlay.setGeometry(self.stacked_widget.rect())

@@ -3,12 +3,12 @@ import shutil
 
 import emoji
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, QPoint
-from PySide6.QtGui import QIcon, QGuiApplication, QColor
+from PySide6.QtGui import QIcon, QColor
 from PySide6.QtWidgets import QFrame, QGraphicsOpacityEffect, QPushButton, QVBoxLayout, QLabel, QHBoxLayout
 
 from globals.constants import SERVER
 from globals.user import user
-from modules import request_helpers
+from modules import request_helpers, ui_helpers
 from modules.ui_helpers import svg_to_icon
 
 
@@ -22,8 +22,7 @@ class PreviewSticker(QFrame):
 
         self.current_user = user
 
-        self.primary_screen = QGuiApplication.primaryScreen()
-        self.scaleFactor = self.primary_screen.devicePixelRatio()
+        self.scaleFactor = ui_helpers.get_screen_scale()
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setObjectName("preview_sticker")
