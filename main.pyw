@@ -47,7 +47,6 @@ def exception_hook(exctype, value, traceback_obj):
 def restart_with_new_binary():
     new_exe = os.path.join(os.path.dirname(sys.executable), "aether.exe")
     subprocess.Popen([new_exe])
-    time.sleep(0.2)
     QApplication.quit()
 
 
@@ -66,15 +65,15 @@ class MainWindow(QMainWindow):
         self.resize(int(400 * self.scaleFactor), int(300 * self.scaleFactor))
         self.setFixedSize(self.size())
 
-        self.toast_provider = toast.QToastProvider(parent=self)
-        self.toast_provider.resize(self.size())
-        self.toast_provider.show()
-
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(svg_to_icon("utils/aeicon.svg", QSize(100, 100), None)))
         self.tray_icon.setToolTip("Æther Desktop")
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.handle_tray_click)
+
+        self.toast_provider = toast.QToastProvider(parent=self, tray_icon=self.tray_icon)
+        self.toast_provider.resize(self.size())
+        self.toast_provider.show()
 
         self.tray_menu = tray_menu.TrayMenu()
         self.tray_icon.setContextMenu(self.tray_menu)

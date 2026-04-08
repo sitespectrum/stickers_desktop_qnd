@@ -2,10 +2,13 @@ import os
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QSize
 from PySide6.QtGui import QRegion, QIcon, QColor
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout, QMainWindow
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QGraphicsOpacityEffect, QVBoxLayout, QMainWindow, \
+    QSystemTrayIcon
 
 from modules import ui_helpers
 from modules.ui_helpers import svg_to_icon
+
+ICON_PATH = os.path.join("utils", "icon.png")
 
 
 class Toast(QFrame):
@@ -107,9 +110,9 @@ class Toast(QFrame):
 
 
 class QToastProvider(QFrame):
-    def __init__(self, parent: QMainWindow = None):
+    def __init__(self, parent: QMainWindow, tray_icon: QSystemTrayIcon):
         super().__init__(parent)
-
+        self.tray_icon = tray_icon
         self.setObjectName("toast_holder")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet("background: transparent;")
@@ -152,6 +155,24 @@ class QToastProvider(QFrame):
         self._update_mask()
 
     def show_toast(self, text, timeout=3000, variant="info"):
+        # noinspection PyTypeChecker
+        parent_window: QMainWindow = self.parent()
+
+        icon_variants = {
+            "info": QSystemTrayIcon.MessageIcon.Information,
+            "warning": QSystemTrayIcon.MessageIcon.Warning,
+            "error": QSystemTrayIcon.MessageIcon.Critical,
+            "success": QSystemTrayIcon.MessageIcon.NoIcon,
+        }
+
+        if not parent_window.isVisible():
+            self.tray_icon.showMessage(
+                "Æther Desktop",
+                text,
+                icon_variants[variant],
+                timeout,
+            )
+
         toast = Toast(text, timeout, variant, parent=self)
         toast.adjustSize()
 
