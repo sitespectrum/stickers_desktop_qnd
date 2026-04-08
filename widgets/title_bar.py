@@ -32,7 +32,7 @@ class TitleBar(QFrame):
         self.layout.addWidget(self.menu_button)
 
         self.label = QLabel("Æther Desktop")
-        self.label.setStyleSheet(f"color: #999")
+        self.label.setStyleSheet(f"color: #999; font-size: {12 * self.scaleFactor}px;")
         self.layout.addWidget(self.label)
 
         self.layout.addStretch()

@@ -174,12 +174,6 @@ class MainWindow(QMainWindow):
 
         self.window_visible = False
 
-        base_size = 10
-        scaled_font = QFont()
-        scaled_font.setPointSizeF(base_size * self.scaleFactor)
-
-        self.setFont(scaled_font)
-
         self.setStyleSheet(f"""
             #central_widget {{
                 background-color: #212121;
@@ -252,7 +246,7 @@ class MainWindow(QMainWindow):
                                                  parent=self.central_widget)
 
         self.overlay = QWidget(self.central_widget)
-        self.overlay.setGeometry(self.stacked_widget.rect())
+        self.overlay.setFixedSize(QSize(int(400 * self.scaleFactor), self.height()))
         self.overlay.move(0, self.title_bar.height())
         self.overlay.setObjectName("overlay")
         self.overlay.setStyleSheet("background-color: rgba(33, 33, 33, .9);")
