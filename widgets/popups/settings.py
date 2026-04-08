@@ -5,10 +5,11 @@ import webbrowser
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QComboBox
 
 from globals import user
 from globals.constants import SERVER, FRONTEND
+from globals.settings import settings
 from modules import ui_helpers, handle_oauth_login, request_helpers
 from widgets import toast
 from widgets.popups import update
@@ -66,6 +67,53 @@ class Settings(QFrame):
             QPushButton:pressed {{
                 background-color: #444;
             }}
+            QComboBox {{
+                background-color: #111;
+                color: #ccc;
+                border: none;
+                border-radius: 5px;
+                padding: 4px 8px;
+                font-size: {11 * self.scaleFactor}px;
+            }}
+            
+            QComboBox:on {{
+                background-color: #333;
+            }}
+            
+            QComboBox:hover {{
+                background-color: #333;
+            }}
+            
+            QComboBox:pressed {{
+                background-color: #444;
+            }}
+            
+            QComboBox:disabled {{
+                background-color: #444;
+                color: #777;
+            }}
+            
+            QComboBox QAbstractItemView {{
+                background-color: #010101;
+                color: #ccc;
+                selection-background-color: #333;
+                selection-color: #ccc;
+                border-radius: 5px;
+            }}
+            
+            QComboBox::drop-down {{
+                width: 25px;
+                background-color: #111;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+            }}
+            
+            QComboBox::down-arrow {{
+                image: url(utils/ui/chevron-down.svg);
+                width: 12px;
+                height: 12px;
+            }}
+            
         """)
 
         self.setVisible(False)
@@ -99,6 +147,21 @@ class Settings(QFrame):
         self.update_button.setFixedSize(int(120 * self.scaleFactor), int(20 * self.scaleFactor))
         self.update_button.clicked.connect(self.update_widget.open)
 
+        self.screen_scale_label = QLabel("Set application scale (requires restart):")
+        self.screen_scale_label.setStyleSheet(f"font-size: {12 * self.scaleFactor}px;")
+
+        self.scale_options = [0.0, 1.0, 1.25, 1.5, 1.75, 2.0]
+        self.set_scale = QComboBox()
+        self.set_scale.addItems([str(int(x * 100)) + "%" if x else "Default" for x in self.scale_options])
+        self.set_scale.setFixedSize(int(120 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.set_scale.setCurrentIndex(self.scale_options.index(settings.screen_scale))
+        self.set_scale.currentIndexChanged.connect(self.change_scale)
+
+        self.restart_button = QPushButton("Restart application")
+        self.restart_button.setFixedSize(int(120 * self.scaleFactor), int(20 * self.scaleFactor))
+        self.restart_button.clicked.connect(self.restart)
+        self.restart_button.hide()
+
         self.title = QLabel("Settings")
         self.title.setStyleSheet(f"font-size: {20 * self.scaleFactor}px; font-weight: bold;")
         self.layout.addWidget(self.close_button)
@@ -107,6 +170,10 @@ class Settings(QFrame):
         self.layout.addWidget(self.login_button)
         self.layout.addSpacing(int(20 * self.scaleFactor))
         self.layout.addWidget(self.update_button)
+        self.layout.addSpacing(int(20 * self.scaleFactor))
+        self.layout.addWidget(self.screen_scale_label)
+        self.layout.addWidget(self.set_scale)
+        self.layout.addWidget(self.restart_button)
 
         self.server_thread = handle_oauth_login.OAuthServerThread()
         handle_oauth_login.OAuthHandler.thread_ref = self.server_thread
@@ -118,6 +185,10 @@ class Settings(QFrame):
         self.challenge = None
 
         self.get_user()
+
+    def change_scale(self):
+        settings.screen_scale = self.scale_options[self.set_scale.currentIndex()]
+        self.restart_button.show()
 
     def set_user(self, logged_in: bool = False):
         if logged_in:
