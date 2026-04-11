@@ -206,12 +206,14 @@ class Body(QFrame):
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(progress)
 
-    def on_download_fail(self, failed):
+    def on_download_fail(self, failed, pack_name):
         if not failed:
             return
-        if os.path.exists(os.path.join("stickers", self.current_pack)):
-            shutil.rmtree(os.path.join("stickers", self.current_pack))
-            self.load_stickers(self.current_pack)
+        print(failed)
+        if os.path.exists(os.path.join("stickers", pack_name)) and pack_name:
+            shutil.rmtree(os.path.join("stickers", pack_name))
+            if self.current_pack == pack_name:
+                self.load_stickers(pack_name)
             self.download_failed.show()
             self.download_failed.description.setText(failed)
             self.download_failed.raise_()

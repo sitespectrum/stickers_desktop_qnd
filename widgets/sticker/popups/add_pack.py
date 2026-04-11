@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton, QLineEdit
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QPushButton, QLineEdit, QWidget
 
 from globals.user import user
 from modules import ui_helpers
@@ -114,6 +114,24 @@ class AddPack(QFrame):
         self.layout.addWidget(self.download_button)
         self.layout.addWidget(self.download_already_running_label)
 
+    def begin_loading(self):
+        self.add_button.setDisabled(True)
+        self.download_and_add_button.setDisabled(True)
+        self.download_button.setDisabled(True)
+
+        self.add_button.setText("Loading...")
+        self.download_and_add_button.setText("Loading...")
+        self.download_button.setText("Loading...")
+
+    def end_loading(self):
+        self.add_button.setDisabled(False)
+        self.download_and_add_button.setDisabled(False)
+        self.download_button.setDisabled(False)
+
+        self.add_button.setText("Add to profile")
+        self.download_and_add_button.setText("Download and add to profile")
+        self.download_button.setText("Download")
+
     def update_buttons(self, logged_in: bool):
         if logged_in:
             self.add_button.setVisible(True)
@@ -132,6 +150,7 @@ class AddPack(QFrame):
         if self.body_widget.downloader.downloading:
             self.download_already_running_label.setHidden(False)
             return
+        self.close_popup()
         self.body_widget.download_pack(pack, add=True, refresh_sidebar=True, close_popup=self.close_popup)
 
     def add_and_download_pack(self):
@@ -143,6 +162,7 @@ class AddPack(QFrame):
             return
         pack = self.pack_input.text()
         self.sidebar_widget.add_pack(pack)
+        self.close_popup()
         self.body_widget.download_pack(pack, add=True, close_popup=self.close_popup)
 
     def add_pack(self):

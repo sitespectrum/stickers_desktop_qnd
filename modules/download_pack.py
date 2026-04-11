@@ -103,7 +103,7 @@ class _DownloadThumbnail(QThread):
 
 class DownloadPack(QObject):
     percent_changed = Signal(int)
-    download_failed = Signal(str)
+    download_failed = Signal(str, str)
     pack_downloaded = Signal(str)
 
     downloading = False
@@ -170,19 +170,19 @@ class DownloadPack(QObject):
 
                 except Exception:
                     self.downloading = False
-                    self.download_failed.emit("Unexpected error downloading pack")
+                    self.download_failed.emit("Unexpected error downloading pack", pack_name)
                 finally:
                     self._reply.deleteLater()
                     self._reply = None
 
             elif self._reply.error() == self._reply.NetworkError.ContentNotFoundError:
                 self.downloading = False
-                self.download_failed.emit("Pack not found")
+                self.download_failed.emit("Pack not found", pack_name)
                 self.percent_changed.emit(100)
             else:
                 self.downloading = False
                 self.percent_changed.emit(100)
-                self.download_failed.emit("Unexpected error downloading pack")
+                self.download_failed.emit("Unexpected error downloading pack", pack_name)
 
         self._reply = request_helpers.make_request(f"{SERVER}/api/stickers/favourites" if pack_name == "favourites" else f"{SERVER}/api/stickers/get_pack/{pack_name}")
         self.percent_changed.emit(0)

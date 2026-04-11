@@ -14,10 +14,11 @@ from widgets import toast
 
 from widgets.sticker import body, sticker_pack_menu
 from widgets.sticker.popups import add_pack
+from widgets.sticker.popups.add_pack import AddPack
 
 
 class Sidebar(QFrame):
-    def __init__(self, toast_provider: toast.QToastProvider, load_favourites, body_widget: body.Body = None, add_pack_widget: add_pack.AddPack=None):
+    def __init__(self, toast_provider: toast.QToastProvider, load_favourites, body_widget: body.Body, add_pack_widget: add_pack.AddPack):
         super().__init__()
         self.current_user = user
         self.current_user.logged_inChanged.connect(self.get_sticker_packs)
@@ -30,7 +31,7 @@ class Sidebar(QFrame):
         self.user_packs = []
 
         self.body = body_widget
-        self.add_pack_widget = add_pack_widget
+        self.add_pack_widget: AddPack = add_pack_widget
 
         self._thumbnail_cache: dict[str, QIcon] = {}
         self._pending_thumbnail: dict[object, QPushButton] = {}
@@ -108,8 +109,10 @@ class Sidebar(QFrame):
             self.add_pack_widget.open_popup()
             self.add_pack_widget.raise_()
             return
+        self.add_pack_widget.begin_loading()
         r = request_helpers.make_request(f"{SERVER}/api/stickers/add_pack", "POST", json_data={"pack_name": pack_name})
         def on_req_finished():
+            self.add_pack_widget.end_loading()
             if r.error() != r.NetworkError.NoError:
                 self.toast_provider.show_toast("Failed to add pack", variant="error")
                 return
@@ -264,7 +267,6 @@ class Sidebar(QFrame):
         favourites_button.clicked.connect(lambda checked=False: self.load_favourites())
         favourites_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         favourites_button.customContextMenuRequested.connect(lambda pos: manage_favourites_menu.exec(favourites_button.mapToGlobal(pos)))
-
 
         refresh_button = QPushButton()
         refresh_button.setFixedSize(int(35 * self.scaleFactor), int(20 * self.scaleFactor))
