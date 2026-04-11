@@ -116,11 +116,11 @@ class EditBookmark(QFrame):
         self.loading_label.setStyleSheet(f"font-size: {int(12 * self.scaleFactor)}px;")
         self.overlay_layout.addWidget(self.loading_label)
         self.overlay.setObjectName("overlay")
-        self.overlay.setFixedSize(self.size())
         self.overlay.setParent(self)
 
         self.setFixedWidth(int(300 * self.scaleFactor))
         self.setFixedHeight(self.layout().sizeHint().height())
+        self.overlay.setFixedSize(self.size())
 
     def loading(self):
         self.overlay.show()
