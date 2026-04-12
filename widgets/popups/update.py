@@ -134,7 +134,7 @@ class Update(QFrame):
             if ".zip" not in i and "aether.exe" not in i:
                 file_list.append(i)
 
-        target_dir = "test"
+        target_dir = ""
 
         for i in file_list:
             source_path = i
