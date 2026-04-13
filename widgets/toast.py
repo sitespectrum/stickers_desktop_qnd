@@ -67,6 +67,9 @@ class Toast(QFrame):
 
         self.label = QLabel(text)
         self.label.setWordWrap(True)
+        self.label.setSizePolicy(self.label.sizePolicy().horizontalPolicy(), self.label.sizePolicy().verticalPolicy())
+        self.label.setMaximumWidth(int(200 * self.scaleFactor) - 40)
+        self.label.adjustSize()
         text_layout.addWidget(self.label)
 
         self.hover_notice = QLabel("Hover to dismiss")
@@ -75,6 +78,9 @@ class Toast(QFrame):
         self.hover_notice.hide()
 
         main_layout.addLayout(text_layout)
+
+        self.adjustSize()
+        self.label.adjustSize()
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
@@ -98,6 +104,8 @@ class Toast(QFrame):
         self.fade_out_anim.start()
 
     def show_with_animation(self):
+        self.adjustSize()
+        self.label.adjustSize()
         self.fade_in_anim.start()
         if not self.timeout:
             self.hover_notice.show()

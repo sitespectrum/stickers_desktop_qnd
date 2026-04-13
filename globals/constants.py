@@ -1,4 +1,4 @@
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 SERVER = "https://aether.sitespectrum.dev"
 FRONTEND = SERVER
 GITHUB_API = "https://api.github.com/repos/sitespectrum/stickers_desktop_qnd/releases/latest"

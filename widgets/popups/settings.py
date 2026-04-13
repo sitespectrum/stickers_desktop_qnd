@@ -193,7 +193,7 @@ class Settings(QFrame):
     def set_user(self, logged_in: bool = False):
         if logged_in:
             self.user_label.setText(
-                f"Logged in as <b>{"@" + self.current_user.username if not self.current_user.username else self.current_user.display_name}</b>")
+                f"Logged in as <b>{"@" + self.current_user.username if not self.current_user.display_name else self.current_user.display_name}</b>")
             try:
                 self.login_button.clicked.disconnect()
             except RuntimeWarning:
