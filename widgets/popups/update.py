@@ -4,13 +4,55 @@ import shutil
 import webbrowser
 from zipfile import ZipFile
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QThread, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar
 
 from globals.constants import VERSION, GITHUB_API
 from modules import ui_helpers, request_helpers
 from widgets import toast
+
+
+class UpdateFiles(QThread):
+    done = Signal(bool)
+    def __init__(self, update_package_name: str):
+        super().__init__()
+        self._update_package_name = update_package_name
+
+    def run(self):
+        with ZipFile(os.path.join("_temp", self._update_package_name), "r") as zip_ref:
+            zip_ref.extractall(path="_temp")
+        os.remove(os.path.join("_temp", self._update_package_name))
+
+        files = []
+        root_dir = "_temp"
+
+        for root, dirs, _files in os.walk(root_dir):
+            for fileName in _files:
+                file_path = os.path.join(os.path.join(root, fileName))
+                files.append(file_path)
+
+        file_list = []
+        for i in files:
+            if ".zip" not in i and "aether.exe" not in i:
+                file_list.append(i)
+
+        target_dir = ""
+
+        for i in file_list:
+            source_path = i
+            target_path = i.replace(root_dir, target_dir)
+            if os.path.exists(target_path):
+                shutil.move(source_path, target_path)
+            else:
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                shutil.move(i, target_path)
+
+        os.replace("_temp/aether.exe", "tempfile.exe")
+        os.replace("aether.exe", "aether-old.exe")
+        os.replace("tempfile.exe", "aether.exe")
+
+        self.done.emit(True)
 
 
 class Update(QFrame):
@@ -26,6 +68,7 @@ class Update(QFrame):
         self.update_package_url = ""
         self.update_package_name = ""
         self.update_running = False
+        self.update_files = None
 
         self.progress_bar = QProgressBar(parent=self)
         self.progress_bar.hide()
@@ -117,61 +160,41 @@ class Update(QFrame):
         self.progress_bar.setValue(0)
         self.progress_bar.raise_()
 
-        with ZipFile(os.path.join("_temp", self.update_package_name), "r") as zip_ref:
-            zip_ref.extractall(path="_temp")
-        os.remove(os.path.join("_temp", self.update_package_name))
+        self.update_files = UpdateFiles(self.update_package_name)
+        def file_update_done(success):
+            self.progress_bar.hide()
+            self.update_running = False
+            if success:
+                self.restart_app.show()
+                self.update_button.hide()
 
-        files = []
-        root_dir = "_temp"
+                self.update_notice.show()
 
-        for root, dirs, _files in os.walk(root_dir):
-            for fileName in _files:
-                file_path = os.path.join(os.path.join(root, fileName))
-                files.append(file_path)
-
-        file_list = []
-        for i in files:
-            if ".zip" not in i and "aether.exe" not in i:
-                file_list.append(i)
-
-        target_dir = ""
-
-        for i in file_list:
-            source_path = i
-            target_path = i.replace(root_dir, target_dir)
-            if os.path.exists(target_path):
-                shutil.move(source_path, target_path)
+                shutil.rmtree("_temp")
+                self.toast_provider.show_toast("Update complete. Please restart the application to apply the changes.",
+                                               variant="success", timeout=0)
             else:
-                os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                shutil.move(i, target_path)
+                self.toast_provider.show_toast("Failed to update application.", variant="error")
+            self.update_files.quit()
+            self.update_files.wait()
+            self.update_files.deleteLater()
+            self.update_files = None
+        self.update_files.done.connect(file_update_done)
+        self.update_files.start()
 
-        os.replace("_temp/aether.exe", "tempfile.exe")
-        os.replace("aether.exe", "aether-old.exe")
-        os.replace("tempfile.exe", "aether.exe")
-
-        self.restart_app.show()
-        self.update_button.hide()
-
-        self.update_notice.show()
-
-        shutil.rmtree("_temp")
-        self.update_running = False
-        self.progress_bar.hide()
-        self.toast_provider.show_toast("Update complete. Please restart the application to apply the changes.",
-                                       variant="success", timeout=0)
 
     def download_update(self):
         if self.update_running:
             self.toast_provider.show_toast("An update is already running.", variant="warning")
+            return
+        if not self.update_package_url:
+            self.toast_provider.show_toast("No update package found.", variant="error")
             return
         self.update_running = True
         self.progress_bar.setMaximum(100)
         self.progress_bar.show()
         self.progress_bar.setValue(0)
         self.progress_bar.raise_()
-        if not self.update_package_url:
-            self.toast_provider.show_toast("No update package found.", variant="error")
-            return
         if not os.path.exists("_temp"):
             os.mkdir("_temp")
         reply = request_helpers.make_request(self.update_package_url)
@@ -227,7 +250,8 @@ class Update(QFrame):
                     self.toast_provider.show_toast("An update is available.",
                                                    timeout=0 if not self.isVisible() else 3000, variant="info")
                     for i in body.get("assets", []):
-                        if i.get("content_type") == "application/x-zip-compressed":
+                        if i.get("content_type") == "application/x-zip-compressed" and i.get("name").endswith(".zip") \
+                                and "windows" in str(i.get("name")).lower():
                             self.update_package_url = i.get("browser_download_url")
                             self.update_package_name = i.get("name")
                             break
