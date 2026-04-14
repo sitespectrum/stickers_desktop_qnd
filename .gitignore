@@ -11,3 +11,6 @@ dist
 _temp
 test
 settings.json
+__pycache__
+*/__pycache__
+**/__pycache__
